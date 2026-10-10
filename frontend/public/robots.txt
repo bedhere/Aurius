@@ -1,0 +1,12 @@
+# AURIUS robots.txt
+# B2B internal pages (login, member centre, admin) must never be indexed
+# by search engines (requirement 33).
+User-agent: *
+Disallow: /vip
+Disallow: /trade
+Disallow: /login
+Disallow: /member
+Disallow: /admin
+Disallow: /forgot-password
+Disallow: /reset-password
+Allow: /

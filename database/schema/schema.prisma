@@ -1,0 +1,888 @@
+// ============================================================================
+// AURIUS B2B Platform - Database Schema
+// SQLite-first (dev default). DATABASE_URL switchable to MySQL/PostgreSQL.
+// All business records are soft-deleted (status/archived), never physically
+// removed, to satisfy the long-term auditability requirement.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum AccountStatus {
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  MORE_INFO_REQUIRED
+  FROZEN
+  SUSPENDED
+}
+
+enum UserRole {
+  ADMIN
+  REGIONAL_AGENT    // Level 1 - AUR-DE
+  LICENSED_TRADESMAN // Level 2 - AUR-TR
+  SUB_DEALER        // Level 3 - AUR-SD
+  WATERWORKER
+  BUILDER
+}
+
+enum TradeType {
+  LICENSED_PLUMPER
+  LICENSED_ELECTRICIAN
+  NOT_APPLICABLE // for trade channel (dealer/agent) users
+}
+
+enum LicenceType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum ApplicationChannel {
+  VIP
+  TRADE
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  MORE_INFO_REQUIRED
+  WITHDRAWN
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  FAILED
+  NOT_APPLICABLE
+}
+
+enum VerificationMethod {
+  ABR_API
+  MANUAL
+  LICENCE_REGISTRY
+  NONE
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum CartStatus {
+  ACTIVE
+  CONVERTED
+  ABANDONED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_PROCESSING
+  PAID
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+  AFTER_SALES
+}
+
+enum PaymentStatus {
+  UNPAID
+  PROCESSING
+  PAID
+  REFUNDED
+  CLOSED
+}
+
+enum ShipmentStatus {
+  PENDING
+  SHIPPED
+  DELIVERED
+  RETURNED
+}
+
+enum PaymentMethod {
+  PAYPAL
+  CREDIT_CARD
+  BANK_TRANSFER
+  SANDBOX
+}
+
+enum PaymentProvider {
+  PAYPAL
+  STRIPE
+  BANK_TRANSFER
+  SANDBOX
+}
+
+enum GatewayStatus {
+  CREATED
+  APPROVED
+  CAPTURED
+  FAILED
+  CANCELLED
+}
+
+enum AdjustmentType {
+  REFUND
+  MANUAL_CORRECTION
+  ORDER_CANCELLATION
+  OTHER
+}
+
+enum DownloadCategory {
+  WATERMARK_CERTIFICATION
+  PRODUCT_CATALOGUE
+  INSTALLATION_DRAWINGS
+  INSTALLATION_GUIDE
+  DEALER_CONTRACT_TEMPLATE
+  TECHNICAL_DOCUMENTS
+  OTHER
+}
+
+enum DownloadStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  DEV_LOGGED
+}
+
+enum SecurityLogLevel {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  REGISTER
+  APPLICATION_SUBMITTED
+  APPLICATION_REVIEWED
+  MEMBER_APPROVED
+  MEMBER_REJECTED
+  MEMBER_FROZEN
+  MEMBER_UNFROZEN
+  ROLE_CHANGED
+  PRICE_CHANGED
+  ORDER_CREATED
+  ORDER_STATUS_CHANGED
+  PAYMENT_CONFIRMED
+  PAYMENT_REFUNDED
+  SHIPMENT_CREATED
+  SHIPMENT_STATUS_CHANGED
+  VERIFICATION_UPDATED
+  FILE_DOWNLOADED
+  FILE_UPLOADED
+  ADMIN_LOGIN
+  SETTINGS_CHANGED
+  ADJUSTMENT_CREATED
+  INSTALLATION_REGISTERED
+}
+
+// ---------------------------------------------------------------------------
+// Users & auth
+// ---------------------------------------------------------------------------
+
+model User {
+  id               Int           @id @default(autoincrement())
+  email            String        @unique
+  passwordHash     String
+  accountStatus    AccountStatus @default(PENDING_REVIEW)
+  role             UserRole      @default(SUB_DEALER)
+  memberLevel      Int?          // 1/2/3 mirrors role for reporting
+  failedLogins     Int           @default(0)
+  lockedUntil      DateTime?
+  lastLoginAt      DateTime?
+  lastLoginIp      String?
+  refreshTokens    RefreshToken[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?     // soft delete marker
+
+  application     PartnerApplication?
+  memberProfile   MemberProfile?
+  memberId        MemberId?
+  licences        Licence[]
+  carts           ShoppingCart[]
+  orders          Order[]
+  addresses       ShippingAddress[]
+  downloads       DownloadAccessLog[]
+  installations   InstallationRecord[] @relation("InstalledBy")
+  referralInbound ReferralSale[]      @relation("ReferredTechnician")
+  reviewLogs      ApplicationReviewLog[]
+  auditLogs       AuditLog[]
+  emailLogs       EmailLog[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  ip        String?
+  userAgent String?
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Applications (VIP / Trade registration)
+// ---------------------------------------------------------------------------
+
+model PartnerApplication {
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique
+  user             User               @relation(fields: [userId], references: [id])
+  channel          ApplicationChannel
+  applicationNo    String             @unique // APP-YYYYMMDD-XXXXXX
+  status           ApplicationStatus  @default(SUBMITTED)
+
+  // Core qualification
+  tradeType        TradeType          @default(NOT_APPLICABLE)
+  state            String? // NSW/VIC/QLD/WA/SA/TAS/ACT/NT
+  licenceType      LicenceType?
+  licenceNumber    String? // AES-encrypted at rest
+
+  // Personal & company
+  firstName        String
+  lastName         String
+  companyName      String
+  streetAddress    String
+  suburb           String
+  postcode         String
+  country          String            @default("Australia")
+  phone            String? // AES-encrypted at rest
+  website          String?
+  socialMedia      String?
+
+  // ABN
+  abnNumber        String? // AES-encrypted at rest
+  abnStatus        VerificationStatus @default(UNVERIFIED)
+  abnVerifiedAt    DateTime?
+  abnVerifiedBy    Int?
+  abnVerifiedNote  String?
+
+  // Experience
+  yearsExperience  Int? // 1-50
+  smartToiletExp   String?
+  waterPurifExp    String?
+  additionalNotes  String?
+
+  // Business interest (multi-select, comma separated)
+  businessInterest String? // Smart Toilet, Whole-House Water Purification, All Categories
+
+  // Consents
+  privacyConsent   Boolean           @default(false)
+  dealerAgreement  Boolean           @default(false)
+  marketingConsent Boolean           @default(false)
+
+  // Flow
+  submittedAt      DateTime          @default(now())
+  lastReviewedAt   DateTime?
+  reviewNotes      String?
+  rejectReason     String?
+  requestedInfo    String?
+  resubmittedAt    DateTime?
+
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  reviewLogs       ApplicationReviewLog[]
+}
+
+model ApplicationReviewLog {
+  id             Int               @id @default(autoincrement())
+  applicationId  Int
+  application    PartnerApplication @relation(fields: [applicationId], references: [id])
+  reviewerId     Int
+  reviewer       User              @relation(fields: [reviewerId], references: [id])
+  reviewTime     DateTime          @default(now())
+  previousStatus ApplicationStatus
+  newStatus      ApplicationStatus
+  reviewNotes    String?
+  action         String // APPROVE / REJECT / REQUEST_MORE_INFO / FREEZE / NOTE
+  ip             String?
+}
+
+// ---------------------------------------------------------------------------
+// Members
+// ---------------------------------------------------------------------------
+
+model MemberProfile {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  user              User     @relation(fields: [userId], references: [id])
+  firstName         String
+  lastName          String
+  companyName       String
+  phone             String? // AES-encrypted
+  website           String?
+  socialMedia       String?
+  streetAddress     String
+  suburb            String
+  state             String?
+  postcode          String
+  country           String   @default("Australia")
+  region            String? // region grouping for reporting
+  approvedAt        DateTime?
+  totalSales        Float    @default(0) // computed, kept in sync by service
+  totalOrders       Int      @default(0)
+  monthSales        Float    @default(0)
+  yearSales         Float    @default(0)
+  totalInstalledUnits Int    @default(0)
+  lastOrderAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model MemberId {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  user       User     @relation(fields: [userId], references: [id])
+  aurId      String   @unique // AUR-DE-YYYYXXXXXX etc.
+  prefix     String   // AUR-DE / AUR-TR / AUR-SD
+  year       Int
+  sequence   Int      // per prefix+year
+  generatedAt DateTime @default(now())
+
+  @@unique([prefix, year, sequence])
+}
+
+model Licence {
+  id             Int                @id @default(autoincrement())
+  userId         Int
+  user           User               @relation(fields: [userId], references: [id])
+  tradeType      TradeType          @default(NOT_APPLICABLE)
+  licenceType    LicenceType?
+  licenceNumber  String? // AES-encrypted
+  state          String?
+  filePath       String? // uploaded licence file
+  fileOriginalName String?
+  fileMime       String?
+  fileSize       Int?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt     DateTime?
+  verifiedBy     Int?
+  verificationNotes String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  verificationLogs VerificationRecord[]
+}
+
+model VerificationRecord {
+  id          Int      @id @default(autoincrement())
+  licenceId   Int?
+  licence     Licence? @relation(fields: [licenceId], references: [id])
+  targetType  String // LICENCE / ABN
+  targetValue String? // AES-encrypted copy for audit
+  method      VerificationMethod @default(MANUAL)
+  result      VerificationStatus
+  verifiedBy  Int
+  verifiedAt  DateTime @default(now())
+  notes       String?
+  ip          String?
+}
+
+// ---------------------------------------------------------------------------
+// Products & pricing
+// ---------------------------------------------------------------------------
+
+model Product {
+  id           Int          @id @default(autoincrement())
+  productCode  String       @unique // internal unique id, e.g. AUR-ST-001
+  sku          String       @unique
+  name         String
+  category     String // Smart Toilet / Toilet Lid / Whole-House Water Purification / Filter Cartridge / Engineering Custom Floor Drain
+  model        String?
+  description  String
+  images       String // JSON array of image paths
+  displayStyle String? // carousel / single / engineering / catalog
+  series       String? // RuiJing / SaiBo / etc.
+  promotionNote String?
+  dimensionSpec String?
+  giftable     Boolean      @default(false)
+  stock        Int          @default(0)
+  status       ProductStatus @default(ACTIVE)
+  specs        String? // JSON key-values (sizes, colors, features)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  prices      ProductPrice?
+  variants    ProductVariant[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  installationRecords InstallationRecord[]
+}
+
+model ProductVariant {
+  id              Int           @id @default(autoincrement())
+  productId       Int
+  product         Product       @relation(fields: [productId], references: [id])
+  skuSuffix       String
+  name            String
+  attributes      String
+  priceAdjustment Float         @default(0)
+  stock           Int?
+  status          ProductStatus @default(ACTIVE)
+  sortOrder       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  cartItems       CartItem[]
+
+  @@unique([productId, skuSuffix])
+}
+
+model ProductPrice {
+  id          Int      @id @default(autoincrement())
+  productId   Int      @unique
+  product     Product  @relation(fields: [productId], references: [id])
+  retailPrice Float? // public display
+  promoPrice Float? // public activity price (90% etc.)
+  waterworkerPrice Float? // trade waterworker price
+  builderPrice Float? // builder price
+  distributor2Price Float? // second-tier distributor price
+  dealer1Price Float? // first-tier dealer price
+  level1Price Float // Regional Exclusive Agent
+  level2Price Float // Licensed Tradesman
+  level3Price Float // Sub-dealer
+  rrp         Float? // recommended retail for public display
+  currency    String   @default("AUD")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  changeLogs  PriceChangeLog[]
+}
+
+model PriceChangeLog {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  productPriceId Int
+  price       ProductPrice @relation(fields: [productPriceId], references: [id])
+  field       String // level1Price / level2Price / level3Price
+  oldValue    Float
+  newValue    Float
+  changedBy   Int
+  reason      String?
+  createdAt   DateTime @default(now())
+}
+
+model RegionalPriceRule {
+  id          Int      @id @default(autoincrement())
+  name        String
+  type        String // REGIONAL_DISCOUNT / VOLUME_DISCOUNT / REMOTE_AREA_SURCHARGE
+  country     String?
+  state       String? // NSW/VIC/... (null = all)
+  minQuantity Int?
+  maxQuantity Int?
+  percentValue Float // e.g. -5.0 discount, +3.5 surcharge
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Cart
+// ---------------------------------------------------------------------------
+
+model ShoppingCart {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  status    CartStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  items     CartItem[]
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  cart      ShoppingCart @relation(fields: [cartId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  variantId Int?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  variantName String?
+  variantAttributes String?
+  quantity  Int
+  unitPrice Float // snapshot at add time (re-validated server-side)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, variantId])
+}
+
+// ---------------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------------
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  orderNumber   String      @unique // AUR-ORD-YYYYMMDD-XXXXXX
+  userId        Int?
+  user          User?       @relation(fields: [userId], references: [id])
+  memberAurId   String? // denormalised AUR ID at order time (auditability)
+  guestToken    String?     @unique
+  guestEmail    String?
+  guestPhone    String?
+  priceLevel    Int // 1/2/3 at order time
+
+  status        OrderStatus @default(PENDING_PAYMENT)
+  paymentStatus PaymentStatus @default(UNPAID)
+  shipmentStatus ShipmentStatus @default(PENDING)
+
+  subtotal      Float
+  discount      Float       @default(0)
+  shippingFee   Float       @default(0)
+  total         Float
+  currency      String      @default("AUD")
+
+  shippingName    String
+  shippingPhone   String
+  shippingStreet  String
+  shippingSuburb  String
+  shippingState   String
+  shippingPostcode String
+  shippingCountry String   @default("Australia")
+  shippingMethod  String
+  notes           String?
+
+  referralTechId  String? // AUR-TR-... or email of referring technician
+  referralEmail   String?
+
+  orderedAt     DateTime    @default(now())
+  paidAt        DateTime?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  cancelledAt   DateTime?
+  refundedAt    DateTime?
+  lastReminderSentAt DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items         OrderItem[]
+  payments      Payment[]
+  shipment      Shipment?
+  statusHistory OrderStatusHistory[]
+  performance   PerformanceRecord?
+  referralSale  ReferralSale?
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  productName String // snapshot
+  sku       String
+  variantId Int?
+  variantName String?
+  variantAttributes String?
+  quantity  Int
+  unitPrice Float // locked price at order time
+  lineTotal Float
+}
+
+model OrderStatusHistory {
+  id         Int         @id @default(autoincrement())
+  orderId    Int
+  order      Order       @relation(fields: [orderId], references: [id])
+  fromStatus OrderStatus?
+  toStatus   OrderStatus
+  note       String?
+  changedBy  Int? // null = system
+  createdAt  DateTime    @default(now())
+  ip         String?
+}
+
+// ---------------------------------------------------------------------------
+// Payments
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id            Int            @id @default(autoincrement())
+  orderId       Int
+  order         Order          @relation(fields: [orderId], references: [id])
+  method        PaymentMethod
+  provider      PaymentProvider
+  amount        Float
+  currency      String         @default("AUD")
+  status        PaymentStatus  @default(UNPAID)
+  gatewayStatus GatewayStatus?
+  transactionId String? // PayPal capture id / Stripe charge id / internal
+  reference     String? // order reference for bank transfer
+  paidAt        DateTime?
+  refundedAt    DateTime?
+  refundedAmount Float?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  receipts      BankTransferReceipt[]
+  adjustment    PerformanceAdjustment[]
+}
+
+model BankTransferReceipt {
+  id            Int      @id @default(autoincrement())
+  paymentId     Int
+  payment       Payment  @relation(fields: [paymentId], references: [id])
+  filePath      String
+  originalName  String
+  mime          String
+  size          Int
+  uploadedAt    DateTime @default(now())
+  verifiedAt    DateTime?
+  verifiedBy    Int?
+  status        String   @default("PENDING_REVIEW") // PENDING_REVIEW / VERIFIED / REJECTED
+}
+
+// ---------------------------------------------------------------------------
+// Shipments
+// ---------------------------------------------------------------------------
+
+model Shipment {
+  id           Int     @id @default(autoincrement())
+  orderId      Int     @unique
+  order        Order   @relation(fields: [orderId], references: [id])
+  carrier      String?
+  trackingNumber String?
+  trackingUrl  String?
+  estimatedDelivery DateTime?
+  status       ShipmentStatus @default(PENDING)
+  shippedAt    DateTime?
+  deliveredAt  DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Performance
+// ---------------------------------------------------------------------------
+
+model PerformanceRecord {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @unique
+  order      Order    @relation(fields: [orderId], references: [id])
+  userId     Int
+  aurId      String
+  salesAmount Float // credited amount at payment time
+  orderCount Int      @default(1)
+  creditedAt DateTime @default(now())
+  status     String   @default("CREDITED") // CREDITED / ADJUSTED / REVERSED
+  adjustments PerformanceAdjustment[]
+}
+
+model PerformanceAdjustment {
+  id           Int            @id @default(autoincrement())
+  performanceId Int
+  performance  PerformanceRecord @relation(fields: [performanceId], references: [id])
+  paymentId    Int?
+  payment      Payment?       @relation(fields: [paymentId], references: [id])
+  orderId      Int
+  type         AdjustmentType
+  originalAmount Float // credited before
+  adjustedAmount Float // delta applied (negative for refund deduction)
+  resultingAmount Float // after
+  reason       String?
+  adjustedBy   Int
+  adjustedAt   DateTime       @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Referrals
+// ---------------------------------------------------------------------------
+
+model ReferralSale {
+  id               Int      @id @default(autoincrement())
+  orderId          Int      @unique
+  order            Order    @relation(fields: [orderId], references: [id])
+  referralTechId   String? // AUR-TR-...
+  referralEmail    String?
+  technicianUserId Int?
+  technician       User?    @relation("ReferredTechnician", fields: [technicianUserId], references: [id])
+  orderAmount      Float
+  creditedAmount   Float // optional commission base
+  status           String   @default("PENDING") // PENDING / CREDITED
+  creditedAt       DateTime?
+  createdAt        DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Installations
+// ---------------------------------------------------------------------------
+
+model InstallationRecord {
+  id                 Int      @id @default(autoincrement())
+  technicianUserId   Int?
+  technician         User?    @relation("InstalledBy", fields: [technicianUserId], references: [id])
+  technicianAurId    String?
+  contactEmail       String?
+  productId          Int?
+  product            Product? @relation(fields: [productId], references: [id])
+  productName        String
+  serialNumber       String?
+  installationDate   DateTime?
+  installationAddress String?
+  reportedBy         Int? // user or admin who reported
+  status             String   @default("REPORTED") // REPORTED / CONFIRMED
+  confirmedAt        DateTime?
+  createdAt          DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Downloads
+// ---------------------------------------------------------------------------
+
+model DownloadFile {
+  id           Int              @id @default(autoincrement())
+  title        String
+  description  String?
+  category     DownloadCategory
+  filePath     String
+  originalName String
+  mime         String
+  size         Int
+  status       DownloadStatus   @default(PUBLISHED)
+  allowedRoles String // comma separated: LEVEL1,LEVEL2,LEVEL3
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  accessLogs   DownloadAccessLog[]
+}
+
+model DownloadAccessLog {
+  id         Int          @id @default(autoincrement())
+  fileId     Int
+  file       DownloadFile @relation(fields: [fileId], references: [id])
+  userId     Int
+  user       User         @relation(fields: [userId], references: [id])
+  aurId      String?
+  downloadedAt DateTime    @default(now())
+  ip         String?
+}
+
+// ---------------------------------------------------------------------------
+// Addresses
+// ---------------------------------------------------------------------------
+
+model ShippingAddress {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  label       String   @default("Default")
+  contactName String
+  phone       String
+  street      String
+  suburb      String
+  state       String
+  postcode    String
+  country     String   @default("Australia")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Logs & settings
+// ---------------------------------------------------------------------------
+
+model EmailLog {
+  id            Int         @id @default(autoincrement())
+  userId        Int?
+  user          User?       @relation(fields: [userId], references: [id])
+  recipient     String
+  subject       String
+  template      String
+  status        EmailStatus @default(QUEUED)
+  sentAt        DateTime?
+  errorMessage  String?
+  createdAt     DateTime    @default(now())
+}
+
+model AuditLog {
+  id        Int         @id @default(autoincrement())
+  userId    Int?
+  user      User?       @relation(fields: [userId], references: [id])
+  action    AuditAction
+  targetType String? // Order / Member / Product ...
+  targetId  String?
+  details   String? // JSON payload
+  ip        String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+}
+
+model SecurityLog {
+  id        Int             @id @default(autoincrement())
+  level     SecurityLogLevel @default(WARNING)
+  eventType String // FAILED_LOGIN / PRICE_BURST / MULTI_ACCOUNT_IP / RATE_LIMIT / ANOMALY_ORDER / ADMIN_LOGIN
+  details   String?
+  ip        String?
+  userId    Int?
+  createdAt DateTime        @default(now())
+}
+
+model SystemSetting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String // JSON-encoded
+  category  String   @default("GENERAL")
+  updatedAt DateTime @updatedAt
+}
+
+model DealerLocation {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  address   String
+  city      String?
+  state     String?
+  latitude  Float
+  longitude Float
+  photos    String   @default("[]")
+  note      String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// ---------------------------------------------------------------------------
+// Idempotency / sequences for business numbers
+// ---------------------------------------------------------------------------
+
+model SequenceCounter {
+  key      String @id // e.g. AUR-TR:2026, ORD:20260817
+  value    Int    @default(0)
+  updatedAt DateTime @updatedAt
+}

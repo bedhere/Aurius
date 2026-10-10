@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build output
+frontend/dist/
+backend/dist/
+
+# Environment (contains secrets — never commit)
+.env
+backend/.env
+
+# Database (SQLite dev files)
+database/schema/*.db
+backend/prisma/*.db
+*.db
+*.db-journal
+
+# Test database
+backend/test.db
+
+# Uploads (user-generated content)
+uploads/
+!uploads/.gitkeep
+
+# Logs
+*.log
+uploads/_devmail/
+uploads-test/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Design source files are not part of the deployed web application
+*.cdr
+
+backend/cookies.txt
+backend/login.json
+server/target/
+tmp/
+

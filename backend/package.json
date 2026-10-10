@@ -1,0 +1,53 @@
+{
+  "name": "aurius-backend",
+  "version": "1.0.0",
+  "description": "AURIUS official website & B2B dealer platform - backend API",
+  "private": true,
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "prisma:generate": "prisma generate --schema ../database/schema/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema ../database/schema/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --schema ../database/schema/schema.prisma",
+    "seed": "tsx ../database/seeds/seed.ts",
+    "seed:admin": "tsx ../scripts/create-admin.ts",
+    "backfill:variants": "tsx ../scripts/backfill-product-variants.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.15",
+    "pdfkit": "^0.15.1",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.0",
+    "@types/nodemailer": "^6.4.16",
+    "@types/pdfkit": "^0.13.5",
+    "@types/supertest": "^6.0.2",
+    "prisma": "^6.19.3",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

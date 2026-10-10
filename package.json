@@ -1,0 +1,18 @@
+{
+  "name": "aurius",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AURIUS official website & B2B dealer platform",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "test": "npm run test --workspace backend",
+    "seed": "npm run seed --workspace backend",
+    "migrate": "npm run prisma:migrate --workspace backend"
+  }
+}

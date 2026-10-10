@@ -1,0 +1,375 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { api, ApiError } from '../../api/client';
+import { ProductItem, ProductVariant } from '../../api/types';
+import { Alert, PageLoading, PriceDisplay } from '../../components/ui';
+import { useAuth } from '../../context/AuthContext';
+import { useI18n } from '../../i18n/LanguageContext';
+import '../../assets/styles/pages-public.css';
+
+interface Specs {
+  sizes?: string[];
+  colors?: string[];
+  features?: string[];
+}
+
+type SpecGroup = 'sizes' | 'colors' | 'features';
+
+function normalizeSpecs(value: ProductItem['specs']): Specs {
+  if (!value || typeof value !== 'object') return {};
+  const raw = value as Record<string, unknown>;
+  const list = (key: SpecGroup): string[] | undefined => {
+    const entry = raw[key];
+    if (!Array.isArray(entry)) return undefined;
+    return entry.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  };
+  return {
+    sizes: list('sizes'),
+    colors: list('colors'),
+    features: list('features'),
+  };
+}
+
+const FLOOR_DRAIN_CODE = 'AUR-FD-01';
+const FLOOR_DRAIN_FINISHES = [
+  { key: 'brushedSteel', color: '#b7bcc0', shine: '#f3f5f4' },
+  { key: 'gold', color: '#c7a13a', shine: '#f6dd82' },
+  { key: 'roseGold', color: '#b87968', shine: '#efb8a5' },
+  { key: 'gunmetal', color: '#3b4a4f', shine: '#73868a' },
+  { key: 'matteBlack', color: '#1e2426', shine: '#566067' },
+] as const;
+type FloorDrainFinishKey = (typeof FLOOR_DRAIN_FINISHES)[number]['key'];
+
+export default function ProductDetail() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const { t } = useI18n();
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [selectedSpecs, setSelectedSpecs] = useState<Partial<Record<SpecGroup, string | string[]>>>({});
+  const [selectedDrainFinish, setSelectedDrainFinish] = useState<FloorDrainFinishKey>(FLOOR_DRAIN_FINISHES[0].key);
+  const [activeImage, setActiveImage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    setSelectedVariant(null);
+    setSelectedSpecs({});
+    setSelectedDrainFinish(FLOOR_DRAIN_FINISHES[0].key);
+    setActiveImage(0);
+    setLoading(true);
+    setLoadError(false);
+    api.get<ProductItem>(`/api/products/${id}`)
+      .then((data) => {
+        if (mounted) setProduct(data);
+      })
+      .catch(() => {
+        if (mounted) {
+          setProduct(null);
+          setLoadError(true);
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [id]);
+
+  const specs = useMemo(() => normalizeSpecs(product?.specs ?? null), [product?.specs]);
+  const fitNote = useMemo(() => {
+    if (!product) return '';
+    const category = typeof product.category === 'string' ? product.category.toLowerCase() : '';
+    const isDrain = product.productCode === FLOOR_DRAIN_CODE || category.includes('drain') || product.displayStyle === 'engineering';
+    if (isDrain) return product.dimensionSpec ?? '115 × 115 mm · Ø80 mm outlet · SUS304 · 1.2 mm material thickness';
+    if (product.dimensionSpec) return product.dimensionSpec;
+    return `Available sizes: ${specs.sizes?.join(' / ') || 'Standard fit'}`;
+  }, [product, specs.sizes]);
+
+  if (loading) {
+    return <PageLoading />;
+  }
+
+  if (loadError || !product) {
+    return (
+      <section className="section">
+        <div className="container center">
+          <Alert type="error">{loadError ? '商品详情加载失败，请稍后重试。' : t('detail.notFound')}</Alert>
+          <Link to="/products" className="btn btn-outline mt-2">{t('common.backProducts')}</Link>
+        </div>
+      </section>
+    );
+  }
+
+  const inStock = product.stock > 0;
+  const isFloorDrain = product.productCode === FLOOR_DRAIN_CODE
+    || (typeof product.category === 'string' && product.category.toLowerCase().includes('drain'))
+    || product.displayStyle === 'engineering';
+  const gallery = Array.isArray(product.images) ? product.images.filter((image): image is string => typeof image === 'string' && image.length > 0) : [];
+  const safeGallery = gallery.length > 0 ? gallery : ['/favicon.svg'];
+  const activeGallery = safeGallery[activeImage] ?? safeGallery[0];
+  const variants = Array.isArray(product.variants) ? product.variants : [];
+  const drainVariants = variants.filter(
+    (variant) => typeof variant.attributes.finishKey === 'string',
+  );
+  const selectedDrainVariant = drainVariants.find(
+    (variant) => variant.attributes.finishKey === selectedDrainFinish,
+  );
+  const selectedDrainImage = selectedDrainVariant?.attributes.image ?? safeGallery[0];
+  const selectedFinishName = selectedDrainVariant?.attributes.colour ?? t(`drain.finish.${selectedDrainFinish}`);
+  const guestCheckoutLink = `/guest-checkout?productId=${product.id}${selectedVariant?.id ? `&variantId=${selectedVariant.id}` : ''}`;
+  const canRetailBuy = !user || user.accountStatus !== 'ACTIVE';
+  const allowCart = Boolean(user?.accountStatus === 'ACTIVE' && inStock);
+
+  const selectedFitNote = isFloorDrain
+    ? `${fitNote} · ${selectedFinishName}`
+    : fitNote;
+
+  const isSpecSelected = (group: SpecGroup, value: string): boolean => {
+    const selected = selectedSpecs[group];
+    return group === 'features' ? Array.isArray(selected) && selected.includes(value) : selected === value;
+  };
+
+  const selectSpec = (group: SpecGroup, value: string): void => {
+    if (group === 'features') {
+      const current = Array.isArray(selectedSpecs.features) ? selectedSpecs.features : [];
+      setSelectedSpecs({
+        ...selectedSpecs,
+        features: current.includes(value) ? current.filter((item) => item !== value) : [...current, value],
+      });
+      return;
+    }
+
+    const nextValue = selectedSpecs[group] === value ? undefined : value;
+    const nextSpecs = { ...selectedSpecs, [group]: nextValue };
+    setSelectedSpecs(nextSpecs);
+
+    if (variants.length > 0) {
+      const variant = variants.find((item) =>
+        Object.entries(nextSpecs).every(([key, selected]) => {
+          if (key === 'features' || !selected || Array.isArray(selected)) return true;
+          const attribute = key === 'sizes' ? 'length' : 'colour';
+          return item.attributes[attribute] === selected;
+        }),
+      );
+      setSelectedVariant(variant ?? null);
+    }
+  };
+
+  const addToCart = async () => {
+    const variantToAdd = isFloorDrain ? selectedDrainVariant : selectedVariant;
+    if (variants.length > 0 && !variantToAdd) {
+      setMessage({ type: 'error', text: 'Select an available product option before adding this item to your cart.' });
+      return;
+    }
+
+    setAdding(true);
+    setMessage(null);
+    try {
+      await api.post('/api/cart', { productId: product.id, quantity: 1, variantId: variantToAdd?.id });
+      setMessage({ type: 'success', text: 'Added to cart. View your cart to proceed to checkout.' });
+    } catch (error) {
+      setMessage({ type: 'error', text: (error as ApiError).message });
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  return (
+    <section className="section">
+      <div className="container">
+        <div className="product-detail__header">
+          <Link to="/products" className="small">{t('common.backProducts')}</Link>
+          <Link to="/trade" className="product-detail__partner">Become Partner</Link>
+        </div>
+
+        <div className="product-detail mt-2">
+          <div>
+            <div className="product-detail__img">
+              {isFloorDrain ? (
+                <div className="product-detail__stage">
+                  <img src={selectedDrainImage} alt={`${product.name} - ${selectedFinishName}`} />
+                </div>
+              ) : (
+                <>
+                  <img src={activeGallery} alt={product.name} />
+                  {safeGallery.length > 1 && (
+                    <div className="product-detail__thumbs">
+                      {safeGallery.map((image, index) => (
+                        <button key={image} type="button" className={index === activeImage ? 'active' : ''} onClick={() => setActiveImage(index)}>
+                          <img src={image} alt={product.name} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {!isFloorDrain && product.displayStyle === 'carousel' && product.promotionNote && (
+              <p className="product-detail__carousel-note">{product.promotionNote}</p>
+            )}
+
+            <div className="product-detail__dimension">
+              <h3>尺寸图</h3>
+              <p>{selectedFitNote}</p>
+              {specs.sizes?.length ? (
+                <div className="dimension-grid">
+                  {specs.sizes.map((size) => (
+                    <span key={size} className={`dimension-pill ${isSpecSelected('sizes', size) ? 'active' : ''}`}>{size}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className="muted small">{product.dimensionSpec ?? 'Please confirm measurements before installation.'}</p>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <span className="card__cat">{product.category}</span>
+            {product.series && <p className="product-detail__series">{product.series}</p>}
+            <h1 className="product-detail__title">{product.name}</h1>
+            {product.model && <p className="muted small">{t('common.model')} {product.model} | SKU {product.sku}</p>}
+            <p>{product.description}</p>
+            {product.giftable && <p className="badge badge-green">可作为赠品</p>}
+
+            <div className="mb-2">
+              <PriceDisplay price={product.price} prices={product.prices} rrp={product.rrp} priceNote={product.priceNote} stock={product.stock} />
+              <div className="mt-1">
+                {inStock ? <span className="badge badge-green">{t('common.inStock')} ({product.stock} {t('common.units')})</span> : <span className="badge badge-red">{t('common.outOfStock')}</span>}
+              </div>
+            </div>
+
+            {!isFloorDrain && variants.length > 0 && (
+              <div className="product-options mb-2">
+                <h3>{t('detail.choose')}</h3>
+                <div className="product-options__list" role="list">
+                  {variants.map((variant) => {
+                    const available = variant.stock === null || variant.stock > 0;
+                    return (
+                      <button
+                        type="button"
+                        key={variant.id}
+                        className={`product-option ${selectedVariant?.id === variant.id ? 'active' : ''}`}
+                        onClick={() => available && setSelectedVariant(variant)}
+                        disabled={!available}
+                        aria-pressed={selectedVariant?.id === variant.id}
+                      >
+                        <span>{variant.name}</span>
+                        <span className="product-option__meta">{available ? (variant.stock === null ? t('common.available') : `${variant.stock} ${t('common.available')}`) : t('common.unavailable')}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {message && <Alert type={message.type}>{message.text}</Alert>}
+
+            {allowCart ? (
+              <button className="btn btn-primary btn-lg" onClick={addToCart} disabled={adding}>
+                {adding ? t('detail.adding') : t('detail.add')}
+              </button>
+            ) : isFloorDrain ? (
+              <Link to="/contact" className="btn btn-primary btn-lg">联系工程定制</Link>
+            ) : canRetailBuy ? (
+              <Link to={guestCheckoutLink} className="btn btn-primary btn-lg">零售购买</Link>
+            ) : (
+              <p className="small muted">{t('detail.approval')}</p>
+            )}
+
+            {isFloorDrain && (
+              <section className="drain-configurator mt-3" aria-labelledby="drain-configurator-title">
+                <div className="drain-configurator__heading">
+                  <h2 id="drain-configurator-title">{t('drain.config.title')}</h2>
+                  <p>{t('drain.config.copy')}</p>
+                </div>
+
+                <div className="drain-configurator__controls">
+                  <div>
+                    <h3>{t('drain.finish')}</h3>
+                    <div className="drain-finish-grid" role="list">
+                      {drainVariants.map((variant) => {
+                        const finishKey = variant.attributes.finishKey as FloorDrainFinishKey;
+                        const finish = FLOOR_DRAIN_FINISHES.find((item) => item.key === finishKey) ?? FLOOR_DRAIN_FINISHES[0];
+                        const name = variant.attributes.colour ?? t(`drain.finish.${finishKey}`);
+                        const selected = selectedDrainFinish === finishKey;
+                        const available = variant.stock === null || variant.stock > 0;
+                        return (
+                          <button
+                            type="button"
+                            className={`drain-finish-option ${selected ? 'active' : ''}`}
+                            key={variant.id}
+                            onClick={() => available && setSelectedDrainFinish(finishKey)}
+                            aria-label={name}
+                            aria-pressed={selected}
+                            disabled={!available}
+                          >
+                            <span className="drain-finish-option__swatch" style={{ background: `linear-gradient(135deg, ${finish.shine}, ${finish.color})` }} aria-hidden="true" />
+                            <span>{name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="drain-preview" aria-live="polite">
+                  <div className="drain-preview__stage">
+                    <img src={selectedDrainImage} alt={`${product.name} - ${selectedFinishName}`} />
+                  </div>
+                  <p className="drain-preview__label">{t('drain.preview')}: 115 × 115 mm · {selectedFinishName}</p>
+                </div>
+              </section>
+            )}
+
+            {(!isFloorDrain && variants.length === 0 && (specs.sizes || specs.colors || specs.features)) && (
+              <div className="mt-3">
+                {specs.sizes && (
+                  <div className="mb-2">
+                    <h3>{t('detail.sizes')}</h3>
+                    <div className="spec-chips">
+                      {specs.sizes.map((size) => (
+                        <button type="button" className={`spec-chip ${isSpecSelected('sizes', size) ? 'active' : ''}`} key={size} onClick={() => selectSpec('sizes', size)} aria-pressed={isSpecSelected('sizes', size)}>
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {specs.colors && (
+                  <div className="mb-2">
+                    <h3>{t('detail.colours')}</h3>
+                    <div className="spec-chips">
+                      {specs.colors.map((color) => (
+                        <button type="button" className={`spec-chip ${isSpecSelected('colors', color) ? 'active' : ''}`} key={color} onClick={() => selectSpec('colors', color)} aria-pressed={isSpecSelected('colors', color)}>
+                          {color}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {specs.features && (
+                  <div>
+                    <h3>{t('detail.features')}</h3>
+                    <div className="spec-chips">
+                      {specs.features.map((feature) => (
+                        <button type="button" className={`spec-chip brand-chip ${isSpecSelected('features', feature) ? 'active' : ''}`} key={feature} onClick={() => selectSpec('features', feature)} aria-pressed={isSpecSelected('features', feature)}>
+                          {feature}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
