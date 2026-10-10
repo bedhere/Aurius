@@ -1,8 +1,8 @@
 // ============================================================================
 // AURIUS B2B Platform - Database Schema
 // SQLite-first (dev default). DATABASE_URL switchable to MySQL/PostgreSQL.
-// All business records are soft-deleted (status/archived), never physically
-// removed, to satisfy the long-term auditability requirement.
+// Business records default to soft deletion for auditability. Products also
+// expose a guarded permanent-delete operation for records without orders.
 // ============================================================================
 
 generator client {

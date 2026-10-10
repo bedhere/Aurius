@@ -3,7 +3,7 @@
 > 数据库模型定义于 `database/schema/schema.prisma`，通过 Prisma Migrate 管理。
 > 本项目甲方资料中未提供现成的 SQL/CDR 数据库文件（目录内的 `.cdr` 均为 CorelDRAW
 > 设计源文件），因此数据模型依据需求文档（第三~七十五节）从零建模，并采用
-> 软删除（status/archive）保证业务数据长期可追溯、不做物理删除。
+> 业务数据默认使用软删除（status/archive）保证长期可追溯；商品提供受保护的永久删除操作，但有订单记录的商品仍保留。
 
 ## 技术说明
 
