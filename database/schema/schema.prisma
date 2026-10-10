@@ -432,6 +432,7 @@ model Product {
   promotionNote String?
   dimensionSpec String?
   giftable     Boolean      @default(false)
+  displayOrder Int          @default(0)
   stock        Int          @default(0)
   status       ProductStatus @default(ACTIVE)
   specs        String? // JSON key-values (sizes, colors, features)

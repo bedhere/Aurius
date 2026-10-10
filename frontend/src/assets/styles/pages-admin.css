@@ -65,6 +65,18 @@
   border: 1px solid var(--stone-200);
 }
 
+.product-image,
+.product-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.product-image {
+  flex-direction: column;
+}
+
 .file-preview a {
   color: var(--brand);
 }

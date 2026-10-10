@@ -68,7 +68,7 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
             orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }],
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

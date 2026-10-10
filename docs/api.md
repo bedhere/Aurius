@@ -139,6 +139,9 @@
 |---|---|---|
 | GET/POST | `/api/admin/products` | 商品列表/新增 |
 | PUT | `/api/admin/products/:id` | 修改商品 |
+| DELETE | `/api/admin/products/:id` | 软删除商品（归档） |
+| DELETE | `/api/admin/products/:id/permanent` | 永久删除已归档且没有订单记录的商品 |
+| PUT | `/api/admin/products/reorder` | 交换两个商品的展示顺序（`id`/`targetId`） |
 | POST | `/api/admin/products/images` | 上传商品图 |
 | GET/POST | `/api/admin/price-rules` | 价格规则 |
 | PUT/DELETE | `/api/admin/price-rules/:id` | 修改/停用规则 |

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { prisma } from '../lib/prisma';
-import { ok, badRequest, notFound, created } from '../lib/response';
+import { ok, badRequest, conflict, notFound, created } from '../lib/response';
 import { audit } from '../services/auditService';
 import { ProductStatus } from '@prisma/client';
 import { sendProductLaunchPromotion } from '../services/reminderService';
@@ -28,7 +28,7 @@ export async function adminListProducts(req: Request, res: Response, next: NextF
       prisma.product.findMany({
         where,
         include: { prices: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -51,6 +51,7 @@ export async function adminListProducts(req: Request, res: Response, next: NextF
         dimensionSpec: p.dimensionSpec,
         stock: p.stock,
         status: p.status,
+        displayOrder: p.displayOrder,
         prices: p.prices
           ? {
               retail: p.prices.retailPrice,
@@ -104,6 +105,7 @@ export async function adminCreateProduct(req: Request, res: Response, next: Next
       rrp?: number | null;
     };
     const product = await prisma.$transaction(async (tx) => {
+      const lastProduct = await tx.product.aggregate({ _max: { displayOrder: true } });
       const p = await tx.product.create({
         data: {
           productCode: body.productCode,
@@ -121,6 +123,7 @@ export async function adminCreateProduct(req: Request, res: Response, next: Next
           promotionNote: body.promotionNote ?? null,
           dimensionSpec: body.dimensionSpec ?? null,
           giftable: body.giftable ?? false,
+          displayOrder: (lastProduct._max.displayOrder ?? -1) + 1,
         },
       });
       await tx.productPrice.create({
@@ -170,6 +173,7 @@ export async function adminGetProduct(req: Request, res: Response, next: NextFun
       description: product.description,
       stock: product.stock,
       status: product.status,
+      displayOrder: product.displayOrder,
       displayStyle: product.displayStyle,
       series: product.series,
       promotionNote: product.promotionNote,
@@ -231,6 +235,68 @@ export async function adminUpdateProduct(req: Request, res: Response, next: Next
     }
     await audit({ userId: req.auth!.uid, action: 'SETTINGS_CHANGED', targetType: 'Product', targetId: String(id), ip: ipOf(req) });
     ok(res, null, 'Product updated');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function adminReorderProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = Number(req.body.id);
+    const targetId = Number(req.body.targetId);
+    if (!Number.isInteger(id) || !Number.isInteger(targetId) || id === targetId) {
+      throw badRequest('Two different product IDs are required');
+    }
+    const products = await prisma.product.findMany({
+      where: { id: { in: [id, targetId] } },
+      select: { id: true, displayOrder: true },
+    });
+    if (products.length !== 2) throw notFound('Product not found');
+    const current = products.find((product) => product.id === id)!;
+    const target = products.find((product) => product.id === targetId)!;
+    await prisma.$transaction([
+      prisma.product.update({ where: { id }, data: { displayOrder: target.displayOrder } }),
+      prisma.product.update({ where: { id: targetId }, data: { displayOrder: current.displayOrder } }),
+    ]);
+    await audit({ userId: req.auth!.uid, action: 'SETTINGS_CHANGED', targetType: 'Product', targetId: String(id), details: { reorderedWith: targetId }, ip: ipOf(req) });
+    ok(res, null, 'Product order updated');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function adminArchiveProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) throw notFound('Product not found');
+    await prisma.product.update({ where: { id }, data: { status: ProductStatus.ARCHIVED } });
+    await audit({ userId: req.auth!.uid, action: 'SETTINGS_CHANGED', targetType: 'Product', targetId: String(id), details: { archived: true }, ip: ipOf(req) });
+    ok(res, null, 'Product archived');
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function adminPermanentlyDeleteProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const product = await prisma.product.findUnique({ where: { id } });
+    if (!product) throw notFound('Product not found');
+    if (product.status !== ProductStatus.ARCHIVED) throw badRequest('Archive the product before permanently deleting it');
+    const orderItemCount = await prisma.orderItem.count({ where: { productId: id } });
+    if (orderItemCount > 0) throw conflict('Products with order history cannot be permanently deleted');
+
+    await prisma.$transaction(async (tx) => {
+      await tx.cartItem.deleteMany({ where: { productId: id } });
+      await tx.installationRecord.updateMany({ where: { productId: id }, data: { productId: null } });
+      await tx.priceChangeLog.deleteMany({ where: { productId: id } });
+      await tx.productVariant.deleteMany({ where: { productId: id } });
+      await tx.productPrice.deleteMany({ where: { productId: id } });
+      await tx.product.delete({ where: { id } });
+    });
+    await audit({ userId: req.auth!.uid, action: 'SETTINGS_CHANGED', targetType: 'Product', targetId: String(id), details: { permanentlyDeleted: true, productCode: product.productCode }, ip: ipOf(req) });
+    ok(res, null, 'Product permanently deleted');
   } catch (err) {
     next(err);
   }

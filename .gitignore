@@ -38,4 +38,5 @@ backend/cookies.txt
 backend/login.json
 server/target/
 tmp/
+.idea/vcs.xml
 

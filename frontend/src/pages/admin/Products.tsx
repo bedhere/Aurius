@@ -14,6 +14,7 @@ interface ProductRow {
   model: string | null;
   stock: number;
   status: string;
+  displayOrder: number;
   displayStyle: string | null;
   series: string | null;
   giftable: boolean;
@@ -64,6 +65,41 @@ export default function Products() {
     fd.append('file', f);
     const r = await api.postForm<{ url: string }>('/api/admin/products/images', fd);
     setImages([...images, r.url]);
+  };
+
+  const moveProduct = async (index: number, offset: number) => {
+    const items = data?.items ?? [];
+    const product = items[index];
+    const target = items[index + offset];
+    if (!product || !target) return;
+    try {
+      await api.put('/api/admin/products/reorder', { id: product.id, targetId: target.id });
+      load();
+    } catch (err) {
+      setMessage({ type: 'error', text: (err as ApiError).message });
+    }
+  };
+
+  const archiveProduct = async (product: ProductRow) => {
+    if (!window.confirm(`Archive ${product.name}? It will no longer appear on the website.`)) return;
+    try {
+      await api.delete(`/api/admin/products/${product.id}`);
+      setMessage({ type: 'success', text: 'Product archived.' });
+      load();
+    } catch (err) {
+      setMessage({ type: 'error', text: (err as ApiError).message });
+    }
+  };
+
+  const permanentlyDeleteProduct = async (product: ProductRow) => {
+    if (!window.confirm(`Permanently delete ${product.name}? This cannot be undone.`)) return;
+    try {
+      await api.delete(`/api/admin/products/${product.id}/permanent`);
+      setMessage({ type: 'success', text: 'Product permanently deleted.' });
+      load();
+    } catch (err) {
+      setMessage({ type: 'error', text: (err as ApiError).message });
+    }
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -194,7 +230,12 @@ export default function Products() {
           <div className="field">
             <label>Images</label>
             <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }} />
-            <div className="flex gap-1 wrap mt-1">{images.map((u) => <img key={u} src={u} className="img-thumb" alt="" />)}</div>
+            <div className="flex gap-1 wrap mt-1">{images.map((u, index) => (
+              <div className="product-image" key={`${u}-${index}`}>
+                <img src={u} className="img-thumb" alt="" />
+                <button className="btn btn-outline btn-sm" type="button" onClick={() => setImages((current) => current.filter((_, imageIndex) => imageIndex !== index))}>Remove</button>
+              </div>
+            ))}</div>
           </div>
           <div className="field"><label>Send promotion email</label><input type="checkbox" checked={form.sendPromotion} onChange={set('sendPromotion')} /></div>
           <button className="btn btn-primary" type="submit">Save</button>
@@ -209,7 +250,7 @@ export default function Products() {
             </tr>
           </thead>
           <tbody>
-            {(data?.items ?? []).map((p) => (
+            {(data?.items ?? []).map((p, index, items) => (
               <tr key={p.id}>
                 <td><img src={p.images[0] ?? '/favicon.svg'} className="img-thumb" alt="" /></td>
                 <td>{p.name}</td>
@@ -220,7 +261,15 @@ export default function Products() {
                 <td>{p.stock}</td>
                 <td><span className={`badge ${statusBadgeClass(p.status)}`}>{p.status}</span></td>
                 <td className="small">{p.prices ? `${p.prices.retail ?? '—'} / ${p.prices.promo ?? '—'} / ${p.prices.level1} / ${p.prices.level2} / ${p.prices.level3}` : '—'}</td>
-                <td><button className="btn btn-outline btn-sm" onClick={() => startEdit(p)}>Edit</button></td>
+                <td>
+                  <div className="product-actions">
+                    <button className="btn btn-outline btn-sm" disabled={index === 0} onClick={() => moveProduct(index, -1)}>↑</button>
+                    <button className="btn btn-outline btn-sm" disabled={index === items.length - 1} onClick={() => moveProduct(index, 1)}>↓</button>
+                    <button className="btn btn-outline btn-sm" onClick={() => startEdit(p)}>Edit</button>
+                    {p.status !== 'ARCHIVED' && <button className="btn btn-outline btn-sm" onClick={() => archiveProduct(p)}>Archive</button>}
+                    {p.status === 'ARCHIVED' && <button className="btn btn-outline btn-sm" onClick={() => permanentlyDeleteProduct(p)}>Delete permanently</button>}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -307,7 +307,7 @@ async function seed(): Promise<void> {
     },
   ];
 
-  for (const t of toilets) {
+  for (const [displayOrder, t] of toilets.entries()) {
     const isFloorDrain = t.code.startsWith('AUR-FD');
     const isWaterProduct = t.code.startsWith('AUR-WF');
     const isShowerFilter = t.code.startsWith('AUR-SF');
@@ -351,6 +351,7 @@ async function seed(): Promise<void> {
         displayStyle: t.displayStyle ?? null,
         promotionNote: t.promotionNote ?? null,
         dimensionSpec: t.dimensionSpec ?? null,
+        displayOrder: toilets.length - 1 - displayOrder,
         stock: t.stock,
         status: 'ACTIVE',
         specs: JSON.stringify({

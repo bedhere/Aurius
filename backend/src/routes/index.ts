@@ -114,8 +114,11 @@ router.post('/admin/members/:id/role', requireAuth, requireAdmin, adminMembers.c
 
 router.get('/admin/products', requireAuth, requireAdmin, adminCatalog.adminListProducts);
 router.post('/admin/products', requireAuth, requireAdmin, adminCatalog.adminCreateProduct);
+router.put('/admin/products/reorder', requireAuth, requireAdmin, adminCatalog.adminReorderProducts);
 router.get('/admin/products/:id', requireAuth, requireAdmin, adminCatalog.adminGetProduct);
 router.put('/admin/products/:id', requireAuth, requireAdmin, adminCatalog.adminUpdateProduct);
+router.delete('/admin/products/:id/permanent', requireAuth, requireAdmin, adminCatalog.adminPermanentlyDeleteProduct);
+router.delete('/admin/products/:id', requireAuth, requireAdmin, adminCatalog.adminArchiveProduct);
 router.post('/admin/products/images', requireAuth, requireAdmin, uploadSub('products'), imageUpload.single('file'), adminCatalog.uploadProductImage);
 
 router.get('/admin/price-rules', requireAuth, requireAdmin, adminCatalog.listPriceRules);
