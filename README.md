@@ -103,6 +103,15 @@ cd ../frontend
 npm run dev
 ```
 
+开发环境启动后端前，如果项目包含新的数据库迁移，请先执行：
+
+```bash
+cd backend
+npm run prisma:deploy
+```
+
+通过 `npm run dev:backend` 启动时会自动执行这一步。
+
 访问 `http://localhost:5173`。
 
 > 一键启动（Windows PowerShell）：在项目根目录运行
