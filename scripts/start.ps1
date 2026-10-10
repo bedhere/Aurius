@@ -9,6 +9,13 @@ Write-Host "== AURIUS 开发环境启动 ==" -ForegroundColor Cyan
 # 1. 启动后端 (端口 4000)
 Write-Host "[1/2] 启动后端 backend (http://localhost:4000) ..."
 $backend = Join-Path $Root 'backend'
+Push-Location $backend
+& npx.cmd prisma migrate deploy --schema ../database/schema/schema.prisma
+if ($LASTEXITCODE -ne 0) {
+  Pop-Location
+  throw "数据库迁移失败，后端未启动。"
+}
+Pop-Location
 Start-Process -FilePath 'npx.cmd' -ArgumentList 'tsx','src/index.ts' `
   -WorkingDirectory $backend -WindowStyle Minimized
 
