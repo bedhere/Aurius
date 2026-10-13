@@ -1,3 +1,26 @@
+.card-grid.vision-values,
+.vision-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.vision-actions {
+  justify-items: center;
+}
+
+.vision-actions .btn {
+  max-width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .card-grid.vision-values,
+  .vision-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .legal-page h3 {
   font-size: 18px;
   margin-top: 28px;

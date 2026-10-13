@@ -34,8 +34,8 @@ export default function Vision() {
     <section className="section"><div className="container" style={{ maxWidth: 820 }}>{paragraphs.map((p) => <p key={p}>{p}</p>)}</div></section>
     <section className="section section-alt"><div className="container">
       <h2 className="section-title">{t('vision.standFor')}</h2>
-      <div className="card-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>{values.map(([title, text]) => <div className="card" key={title}><div className="card__body"><h3 className="card__title">{title}</h3><p className="card__desc" style={{ margin: 0 }}>{text}</p></div></div>)}</div>
-      <div className="flex gap-2 wrap mt-3" style={{ justifyContent: 'center' }}><Link to="/vip" className="btn btn-primary">{t('vision.trades')}</Link><Link to="/trade" className="btn btn-outline">{t('vision.dealer')}</Link></div>
+      <div className="card-grid vision-values">{values.map(([title, text]) => <div className="card" key={title}><div className="card__body"><h3 className="card__title">{title}</h3><p className="card__desc" style={{ margin: 0 }}>{text}</p></div></div>)}</div>
+      <div className="vision-actions mt-3"><Link to="/vip" className="btn btn-primary">{t('vision.trades')}</Link><Link to="/trade" className="btn btn-outline">{t('vision.dealer')}</Link></div>
     </div></section>
   </>;
 }
