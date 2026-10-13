@@ -1174,6 +1174,13 @@ table.data-table {
 }
 
 @media (max-width: 900px) {
+  .pdf-header .nav-toggle {
+    width: auto;
+    min-width: 56px;
+    flex-shrink: 0;
+    margin-right: 24px;
+  }
+
   .pdf-header .site-header__top {
     min-height: auto;
     padding: 24px 0;

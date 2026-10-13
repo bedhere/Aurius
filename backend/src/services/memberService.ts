@@ -316,6 +316,8 @@ export async function unfreezeMember(userId: number, adminId: number, ip?: strin
 export async function resubmitApplication(
   userId: number,
   updates: {
+    partnershipType?: string;
+    intendedTerritory?: string | null;
     firstName: string;
     lastName: string;
     companyName: string;

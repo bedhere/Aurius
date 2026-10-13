@@ -62,6 +62,8 @@ export async function submitApplication(req: Request, res: Response, next: NextF
         data: {
           userId: user.id,
           channel: body.channel,
+          partnershipType: body.partnershipType ?? (body.channel === 'VIP' ? 'TRADE_PROFESSIONAL' : 'DEALER'),
+          intendedTerritory: body.partnershipType === 'REGIONAL_DISTRIBUTOR' ? body.intendedTerritory ?? null : null,
           applicationNo,
           tradeType: body.tradeType,
           state: body.state,
@@ -132,7 +134,17 @@ export async function resubmit(req: Request, res: Response, next: NextFunction):
       throw forbidden('Your application is not in a resubmittable state');
     }
     const body = validated<ApplicationInput>(req);
+    const partnershipType = body.partnershipType ?? app.partnershipType;
+    const intendedTerritory = body.intendedTerritory === undefined ? app.intendedTerritory : body.intendedTerritory;
+    if (partnershipType === 'REGIONAL_DISTRIBUTOR' && (app.channel !== 'TRADE' || !intendedTerritory?.trim())) {
+      throw badRequest('Regional distributors must use the Trade channel and specify an intended distribution territory');
+    }
+    if (app.channel === 'VIP' && partnershipType && partnershipType !== 'TRADE_PROFESSIONAL') {
+      throw badRequest('VIP applications are for licensed trade professionals');
+    }
     await resubmitApplication(userId, {
+      partnershipType: partnershipType ?? undefined,
+      intendedTerritory: partnershipType === 'REGIONAL_DISTRIBUTOR' ? intendedTerritory : null,
       firstName: body.firstName,
       lastName: body.lastName,
       companyName: body.companyName,
@@ -178,6 +190,8 @@ export async function myApplication(req: Request, res: Response, next: NextFunct
     ok(res, {
       applicationNo: app.applicationNo,
       channel: app.channel,
+      partnershipType: app.partnershipType,
+      intendedTerritory: app.intendedTerritory,
       status: app.status,
       tradeType: app.tradeType,
       state: app.state,

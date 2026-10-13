@@ -10,6 +10,8 @@ interface AppRow {
   applicationNo: string;
   status: string;
   channel: string;
+  partnershipType: string | null;
+  intendedTerritory: string | null;
   tradeType: string;
   state: string | null;
   firstName: string;
@@ -28,6 +30,8 @@ interface AppDetail {
   applicationNo: string;
   status: string;
   channel: string;
+  partnershipType: string | null;
+  intendedTerritory: string | null;
   tradeType: string;
   state: string | null;
   licenceType: string | null;
@@ -57,9 +61,14 @@ interface AppDetail {
   reviewLogs: { reviewTime: string; previousStatus: string; newStatus: string; reviewNotes: string | null; action: string }[];
 }
 
+function partnershipLabel(type: string | null) {
+  return ({ REGIONAL_DISTRIBUTOR: 'Regional Distributor', DEALER: 'Dealer / Reseller', TRADE_PROFESSIONAL: 'Trade Professional' } as Record<string, string>)[type ?? ''] ?? '—';
+}
+
 export default function Applications() {
   const [status, setStatus] = useState('');
   const [channel, setChannel] = useState('');
+  const [partnershipType, setPartnershipType] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [data, setData] = useState<{ items: AppRow[]; total: number; page: number; pageSize: number } | null>(null);
@@ -70,11 +79,12 @@ export default function Applications() {
     const params = new URLSearchParams({ page: String(page), pageSize: '20' });
     if (status) params.set('status', status);
     if (channel) params.set('channel', channel);
+    if (partnershipType) params.set('partnershipType', partnershipType);
     if (search) params.set('search', search);
     api.get(`/api/admin/applications?${params.toString()}`).then(setData).catch(() => setData(null));
   };
 
-  useEffect(loadList, [status, channel, search, page]);
+  useEffect(loadList, [status, channel, partnershipType, search, page]);
 
   const loadDetail = (id: number) => {
     setSelected(null);
@@ -93,7 +103,7 @@ export default function Applications() {
       if (!info) return;
       body = { action, requestedInfo: info };
     } else if (action === 'APPROVE') {
-      const role = window.prompt('Approve role (REGIONAL_AGENT / LICENSED_TRADESMAN / SUB_DEALER)', 'SUB_DEALER');
+      const role = window.prompt('Approve role (REGIONAL_AGENT / LICENSED_TRADESMAN / SUB_DEALER)', selected.partnershipType === 'REGIONAL_DISTRIBUTOR' ? 'REGIONAL_AGENT' : selected.channel === 'VIP' ? 'LICENSED_TRADESMAN' : 'SUB_DEALER');
       if (!role) return;
       body = { action, role };
     }
@@ -136,6 +146,12 @@ export default function Applications() {
           <option value="VIP">VIP</option>
           <option value="TRADE">TRADE</option>
         </select>
+        <select aria-label="Partnership type filter" value={partnershipType} onChange={(e) => { setPartnershipType(e.target.value); setPage(1); }}>
+          <option value="">All partnership types</option>
+          <option value="REGIONAL_DISTRIBUTOR">Regional Distributor</option>
+          <option value="DEALER">Dealer / Reseller</option>
+          <option value="TRADE_PROFESSIONAL">Trade Professional</option>
+        </select>
         <input
           type="text"
           placeholder="Search…"
@@ -154,6 +170,8 @@ export default function Applications() {
               <th>Company</th>
               <th>Email</th>
               <th>Channel</th>
+              <th>Partnership</th>
+              <th>Intended Territory</th>
               <th>State</th>
               <th>ABN</th>
               <th>Status</th>
@@ -169,6 +187,8 @@ export default function Applications() {
                 <td>{a.companyName}</td>
                 <td className="small">{a.email}</td>
                 <td>{a.channel}</td>
+                <td>{partnershipLabel(a.partnershipType)}</td>
+                <td>{a.intendedTerritory ?? '—'}</td>
                 <td>{a.state ?? '—'}</td>
                 <td>
                   <span className={`badge ${statusBadgeClass(a.abnStatus)}`}>{a.abnStatus}</span>
@@ -205,6 +225,8 @@ export default function Applications() {
             </div>
             <div>
               <div className="kv"><b>Channel</b><span>{selected.channel}</span></div>
+              <div className="kv"><b>Partnership</b><span>{partnershipLabel(selected.partnershipType)}</span></div>
+              <div className="kv"><b>Intended Territory</b><span>{selected.intendedTerritory ?? '—'}</span></div>
               <div className="kv"><b>Trade Type</b><span>{selected.tradeType}</span></div>
               <div className="kv"><b>Licence Type</b><span>{selected.licenceType ?? '—'}</span></div>
               <div className="kv"><b>Licence Number</b><span>{selected.licenceNumber || '—'}</span></div>

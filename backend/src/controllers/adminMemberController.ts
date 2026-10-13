@@ -35,6 +35,10 @@ export async function listApplications(req: Request, res: Response, next: NextFu
   try {
     const status = req.query.status as string | undefined;
     const channel = req.query.channel as string | undefined;
+    const partnershipType = req.query.partnershipType as string | undefined;
+    if (partnershipType && !['REGIONAL_DISTRIBUTOR', 'DEALER', 'TRADE_PROFESSIONAL'].includes(partnershipType)) {
+      throw badRequest('A valid partnership type is required');
+    }
     const search = req.query.search as string | undefined;
     const page = Math.max(1, parseInt((req.query.page as string) ?? '1', 10) || 1);
     const pageSize = Math.min(100, Math.max(1, parseInt((req.query.pageSize as string) ?? '20', 10) || 20));
@@ -42,6 +46,7 @@ export async function listApplications(req: Request, res: Response, next: NextFu
     const where = {
       ...(status ? { status: status as never } : {}),
       ...(channel ? { channel: channel as never } : {}),
+      ...(partnershipType ? { partnershipType } : {}),
       ...(search
         ? {
             OR: [

@@ -88,4 +88,58 @@ describe('Registration (requirement 90 - registration tests)', () => {
     const user = await prisma.user.findUnique({ where: { email: data.email as string } });
     expect(user?.accountStatus).toBe('PENDING_REVIEW');
   });
+
+  it('records regional distributor intent without granting an agent role', async () => {
+    const data = validApplication({ channel: 'TRADE', tradeType: 'NOT_APPLICABLE', licenceType: null,
+      licenceNumber: null, smartToiletExp: null, waterPurifExp: null,
+      partnershipType: 'REGIONAL_DISTRIBUTOR', intendedTerritory: '  Greater Sydney, NSW  ' });
+    const res = await request(app).post('/api/applications').send(data);
+    expect(res.status).toBe(201);
+    const record = await prisma.partnerApplication.findUnique({ where: { applicationNo: res.body.data.applicationNo }, include: { user: true } });
+    expect(record?.partnershipType).toBe('REGIONAL_DISTRIBUTOR');
+    expect(record?.intendedTerritory).toBe('Greater Sydney, NSW');
+    expect(record?.user.accountStatus).toBe('PENDING_REVIEW');
+    expect(record?.user.role).toBe('SUB_DEALER');
+
+    const adminEmail = `regional-review-${Date.now()}@test.com.au`;
+    await createUser(adminEmail, 'ADMIN');
+    const auth = await loginAgent(app, adminEmail, 'Test@1234');
+    const list = await request(app).get('/api/admin/applications?partnershipType=REGIONAL_DISTRIBUTOR')
+      .set('Authorization', `Bearer ${auth.token}`);
+    expect(list.status).toBe(200);
+    expect(list.body.data.items.some((row: { applicationNo: string }) => row.applicationNo === res.body.data.applicationNo)).toBe(true);
+    expect(list.body.data.items.every((row: { partnershipType: string }) => row.partnershipType === 'REGIONAL_DISTRIBUTOR')).toBe(true);
+
+    await request(app).post(`/api/admin/applications/${record!.id}/review`)
+      .set('Authorization', `Bearer ${auth.token}`)
+      .send({ action: 'REQUEST_MORE_INFO', requestedInfo: 'Please clarify your proposed territory' });
+    const applicant = await loginAgent(app, data.email as string);
+    const invalidResubmit = await request(app).post('/api/applications/resubmit')
+      .set('Authorization', `Bearer ${applicant.token}`).send({ ...data, intendedTerritory: null });
+    expect(invalidResubmit.status).toBe(400);
+    const updated = await request(app).post('/api/applications/resubmit')
+      .set('Authorization', `Bearer ${applicant.token}`).send({ ...data, intendedTerritory: 'Newcastle, NSW' });
+    expect(updated.status).toBe(200);
+    const revised = await prisma.partnerApplication.findUnique({ where: { id: record!.id } });
+    expect(revised?.intendedTerritory).toBe('Newcastle, NSW');
+    expect(revised?.partnershipType).toBe('REGIONAL_DISTRIBUTOR');
+  });
+
+  it('requires a territory for regional distributors and rejects the VIP channel for this intent', async () => {
+    const missingTerritory = validApplication({ channel: 'TRADE', partnershipType: 'REGIONAL_DISTRIBUTOR', intendedTerritory: '   ' });
+    expect((await request(app).post('/api/applications').send(missingTerritory)).status).toBe(400);
+    const wrongChannel = validApplication({ partnershipType: 'REGIONAL_DISTRIBUTOR', intendedTerritory: 'NSW' });
+    expect((await request(app).post('/api/applications').send(wrongChannel)).status).toBe(400);
+  });
+
+  it('accepts other trade professionals without a licence and discards unrelated territory text', async () => {
+    const data = validApplication({ channel: 'TRADE', tradeType: 'NOT_APPLICABLE', licenceType: null,
+      licenceNumber: null, smartToiletExp: null, waterPurifExp: null,
+      partnershipType: 'TRADE_PROFESSIONAL', intendedTerritory: 'NSW' });
+    const res = await request(app).post('/api/applications').send(data);
+    expect(res.status).toBe(201);
+    const record = await prisma.partnerApplication.findUnique({ where: { applicationNo: res.body.data.applicationNo } });
+    expect(record?.partnershipType).toBe('TRADE_PROFESSIONAL');
+    expect(record?.intendedTerritory).toBeNull();
+  });
 });

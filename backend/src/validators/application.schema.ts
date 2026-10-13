@@ -8,6 +8,8 @@ export const tradeTypeSchema = z.enum(['LICENSED_PLUMPER', 'LICENSED_ELECTRICIAN
 
 const applicationObject = z.object({
   channel: z.enum(['VIP', 'TRADE']),
+  partnershipType: z.enum(['REGIONAL_DISTRIBUTOR', 'DEALER', 'TRADE_PROFESSIONAL']).optional(),
+  intendedTerritory: z.string().trim().min(1).max(200).optional().nullable(),
   email: emailSchema,
   tradeType: tradeTypeSchema,
   state: z.enum(AU_STATES, { message: 'Please select an Australian state/territory' }),
@@ -25,8 +27,8 @@ const applicationObject = z.object({
   socialMedia: z.string().max(300).optional().nullable(),
   abnNumber: z.string().regex(/^\d{11}$/, 'ABN must be exactly 11 digits').optional().nullable(),
   yearsExperience: z.number().int().min(1, 'Years of experience is required').max(50).optional().nullable(),
-  smartToiletExp: z.string().min(1, 'Smart Toilet installation experience is required').optional(),
-  waterPurifExp: z.string().min(1, 'Water purification installation experience is required').optional(),
+  smartToiletExp: z.string().min(1, 'Smart Toilet installation experience is required').optional().nullable(),
+  waterPurifExp: z.string().min(1, 'Water purification installation experience is required').optional().nullable(),
   additionalNotes: z.string().max(4000).optional().nullable(),
   businessInterest: z.array(z.string()).min(1, 'Select at least one business category'),
   privacyConsent: z.boolean().refine((v) => v === true, { message: 'You must accept the Privacy Policy and Terms of Service' }),
@@ -49,6 +51,17 @@ export const applicationSchema = applicationObject
     path: ['confirmPassword'],
   })
   .superRefine((d, ctx) => {
+    if (d.partnershipType === 'REGIONAL_DISTRIBUTOR') {
+      if (d.channel !== 'TRADE') {
+        ctx.addIssue({ code: 'custom', path: ['partnershipType'], message: 'Regional distributors must apply through the Trade channel' });
+      }
+      if (!d.intendedTerritory) {
+        ctx.addIssue({ code: 'custom', path: ['intendedTerritory'], message: 'Please specify your intended distribution territory' });
+      }
+    }
+    if (d.channel === 'VIP' && d.partnershipType && d.partnershipType !== 'TRADE_PROFESSIONAL') {
+      ctx.addIssue({ code: 'custom', path: ['partnershipType'], message: 'VIP applications are for licensed trade professionals' });
+    }
     // VIP channel (licensed plumber / electrician) has stricter requirements
     if (d.channel === 'VIP') {
       if (d.tradeType === 'NOT_APPLICABLE') {

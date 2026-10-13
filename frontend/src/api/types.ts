@@ -243,6 +243,8 @@ export interface OrderDetail {
 export interface ApplicationDetail {
   applicationNo: string;
   channel: string;
+  partnershipType: string | null;
+  intendedTerritory: string | null;
   status: string;
   tradeType: string;
   state: string | null;

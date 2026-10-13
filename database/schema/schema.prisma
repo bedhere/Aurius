@@ -265,6 +265,8 @@ model PartnerApplication {
   userId           Int                @unique
   user             User               @relation(fields: [userId], references: [id])
   channel          ApplicationChannel
+  partnershipType  String? // REGIONAL_DISTRIBUTOR / DEALER / TRADE_PROFESSIONAL
+  intendedTerritory String? // requested region, subject to approval
   applicationNo    String             @unique // APP-YYYYMMDD-XXXXXX
   status           ApplicationStatus  @default(SUBMITTED)
 

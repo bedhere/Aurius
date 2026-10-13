@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
 import { Alert } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,8 @@ import '../../assets/styles/pages-auth.css';
 type Channel = 'VIP' | 'TRADE';
 
 interface RegForm {
+  partnershipType: string;
+  intendedTerritory: string;
   tradeType: string;
   state: string;
   licenceType: string;
@@ -37,6 +39,8 @@ interface RegForm {
 }
 
 const emptyForm: RegForm = {
+  partnershipType: 'DEALER',
+  intendedTerritory: '',
   tradeType: '',
   state: '',
   licenceType: '',
@@ -81,11 +85,14 @@ const EXP_LEVELS = [
 export default function Portal({ channel }: { channel: Channel }) {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+  const [searchParams] = useSearchParams();
+  const initialPartnership = channel === 'VIP' ? 'TRADE_PROFESSIONAL'
+    : searchParams.get('partner') === 'regional-distributor' ? 'REGIONAL_DISTRIBUTOR' : 'DEALER';
+  const [tab, setTab] = useState<'login' | 'register'>(() => searchParams.get('tab') === 'register' ? 'register' : 'login');
   const [step, setStep] = useState(1);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-  const [reg, setReg] = useState<RegForm>(emptyForm);
+  const [reg, setReg] = useState<RegForm>({ ...emptyForm, partnershipType: initialPartnership });
   const [licenceFile, setLicenceFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +102,17 @@ export default function Portal({ channel }: { channel: Channel }) {
   const recaptchaInjected = useRef(false);
 
   const isVIP = channel === 'VIP';
+  const isRegional = !isVIP && reg.partnershipType === 'REGIONAL_DISTRIBUTOR';
+
+  useEffect(() => {
+    setTab(searchParams.get('tab') === 'register' ? 'register' : 'login');
+    setReg({ ...emptyForm, partnershipType: initialPartnership });
+    setStep(1);
+    setErrors({});
+    setError(null);
+    setSuccess(null);
+    setLicenceFile(null);
+  }, [channel, searchParams, initialPartnership]);
 
   useEffect(() => {
     api
@@ -142,6 +160,7 @@ export default function Portal({ channel }: { channel: Channel }) {
   const validateStep = (s: number): boolean => {
     const errs: Record<string, string> = {};
     if (s === 1) {
+      if (isRegional && !reg.intendedTerritory.trim()) errs.intendedTerritory = 'Please specify your intended distribution territory';
       if (isVIP && !reg.tradeType) errs.tradeType = 'Trade type is required';
       if (!reg.state) errs.state = 'State/territory is required';
       if (isVIP && !reg.licenceType) errs.licenceType = 'Licence type is required';
@@ -188,6 +207,8 @@ export default function Portal({ channel }: { channel: Channel }) {
     setSuccess(null);
     const payload = {
       channel,
+      partnershipType: reg.partnershipType,
+      intendedTerritory: isRegional ? reg.intendedTerritory.trim() : null,
       email: reg.email,
       tradeType: isVIP ? reg.tradeType : 'NOT_APPLICABLE',
       state: reg.state,
@@ -229,7 +250,7 @@ export default function Portal({ channel }: { channel: Channel }) {
         }
       }
       setSuccess('Application submitted. Our team will review your qualifications. You can track the status in the member centre.');
-      setReg(emptyForm);
+      setReg({ ...emptyForm, partnershipType: initialPartnership });
       setStep(1);
     } catch (err) {
       const apiErr = err as ApiError;
@@ -253,11 +274,12 @@ export default function Portal({ channel }: { channel: Channel }) {
     <section className="section">
       <div className={`auth-wrap ${tab === 'register' ? 'wide' : ''}`}>
         <div className="center mb-2">
-          <h2 className="section-title">{isVIP ? 'Licensed Tradesman Portal' : 'Trade Partner Portal'}</h2>
+          <h2 className="section-title">{isVIP ? 'Trade Professional Portal' : isRegional ? 'Regional Distributor Application' : 'Trade Partner Portal'}</h2>
           <p className="section-sub" style={{ marginBottom: 0 }}>
             {isVIP
               ? 'For licensed Australian plumbers and electricians only.'
-              : 'Regional exclusive agents, sub-dealers and distribution partners.'}
+              : isRegional ? 'Apply to become an authorised AURIUS regional distributor. All territories are subject to review and approval.'
+                : 'For regional distributors, dealers and professional business partners.'}
           </p>
         </div>
 
@@ -299,6 +321,7 @@ export default function Portal({ channel }: { channel: Channel }) {
           <div className="form-card">
             <h3>{isVIP ? 'Aurius Trade Professional Registration' : 'Aurius Trade Partner Registration'}</h3>
             <p className="muted small">{isVIP ? 'For licensed Australian plumbers and electricians only.' : 'Register your business for trade access.'}</p>
+            {isVIP && <p className="small">Dealers, installers and other business partners: <Link to="/trade?tab=register">apply through our Trade Partner Portal</Link>.</p>}
 
             <div className="step-indicator">
               <div className={`step-dot ${step >= 1 ? 'active' : ''}`} />
@@ -308,6 +331,22 @@ export default function Portal({ channel }: { channel: Channel }) {
 
             {step === 1 && (
               <>
+                {!isVIP && <>
+                  <div className="field">
+                    <label htmlFor="partnership-type">Partnership Type <span className="req">*</span></label>
+                    <select id="partnership-type" value={reg.partnershipType} onChange={set('partnershipType')}>
+                      <option value="REGIONAL_DISTRIBUTOR">Regional Distributor (Level 1)</option>
+                      <option value="DEALER">Dealer / Reseller</option>
+                      <option value="TRADE_PROFESSIONAL">Installer / Other Trade Professional</option>
+                    </select>
+                  </div>
+                  {isRegional && <div className="field">
+                    <label htmlFor="intended-territory">Intended Distribution Territory <span className="req">*</span></label>
+                    <input id="intended-territory" type="text" maxLength={200} placeholder="e.g. Greater Sydney, NSW" value={reg.intendedTerritory} onChange={set('intendedTerritory')} />
+                    <div className="hint">Tell us the region you would like to represent. Territory allocation is subject to approval.</div>
+                    {fieldErr('intendedTerritory')}
+                  </div>}
+                </>}
                 {isVIP && (
                   <div className="field">
                     <label>
