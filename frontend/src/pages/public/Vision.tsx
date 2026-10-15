@@ -17,24 +17,34 @@ export default function Vision() {
     ];
   const values = language === 'zh-CN'
     ? [
-      ['澳大利亚标准与品质保障', 'AURIUS 致力于产品品质、安全及符合适用的澳大利亚要求。包括适用情况下的 WaterMark 在内，相关认证按具体产品和型号列明。'],
-      ['智能设计与日常舒适', '我们的多功能智能马桶将先进的个人清洁体验、注重舒适的功能与精致设计相结合，提升现代卫浴生活品质。'],
-      ['全屋净水系统', '我们的全屋净水解决方案旨在改善家庭整体用水品质，将多级过滤、优质材料与实用性能相结合。'],
-      ['全国专业合作伙伴网络', '我们正在澳大利亚建立有序的授权区域代理、经销商与持证专业人员网络，以明确的合作区域、产品资源及长期业务伙伴关系提供支持。'],
+      ['品质与标准', '我们致力于提供精心设计的产品，重视品质、可靠性以及符合适用的澳大利亚标准。通过关注每一个细节，建立客户长期的信任。'],
+      ['智慧生活', 'AURIUS智能马桶融合精致设计与实用创新，提升日常生活的舒适性和便利性。专为现代澳大利亚住宅打造，实现科技、功能与优雅设计的平衡。'],
+      ['高端全屋净水', 'AURIUS全屋净水系统融合可靠的过滤技术与精致设计，为现代澳大利亚住宅提供高品质的全屋净水解决方案，与现代高端住宅环境相得益彰。'],
+      ['长期渠道合作', '我们正在澳大利亚建立结构清晰的分销网络，通过明确的区域划分、紧密的合作关系和长期业务发展战略，为有实力、有共同理念的渠道合作伙伴创造可持续的发展机会。'],
     ]
     : [
-      ['Australian Standards & Quality Assurance', 'AURIUS is committed to product quality, safety and compliance with applicable Australian requirements. Relevant certifications, including WaterMark where applicable, are identified by product and model.'],
-      ['Intelligent Design & Everyday Comfort', 'Our full-featured smart toilets combine advanced personal cleansing, comfort-focused features and refined design to elevate the modern bathroom experience.'],
-      ['Whole-House Water Filtration', 'Our whole-house filtration solutions are designed to improve water quality throughout the home, combining multi-stage filtration with premium materials and practical performance.'],
-      ['A Nationwide Professional Partner Network', 'We are developing a structured Australian network of authorised regional distributors, dealers and licensed trade professionals, supported by defined territories, product resources and long-term business partnerships.'],
+      ['QUALITY & STANDARDS', 'We are committed to delivering thoughtfully engineered products with a strong focus on quality, reliability and compliance with applicable Australian standards. Our approach is built on attention to detail and long-term customer confidence.'],
+      ['SMART LIVING', 'Combining refined design with practical innovation, AURIUS smart toilets are created to enhance everyday comfort and convenience. Designed for modern Australian homes, they bring a considered balance of technology, functionality and elegance.'],
+      ['PREMIUM WATER FILTRATION', 'AURIUS whole-house water filtration systems combine reliable filtration technology with sophisticated design. Created for modern Australian homes, they offer a premium water filtration solution that complements contemporary residential environments.'],
+      ['STRONGER PARTNERSHIPS', 'We are building a structured distribution network across Australia, supported by clearly defined territories, collaborative relationships and a long-term approach to business development. Our goal is to create sustainable opportunities for committed distribution partners.'],
     ];
 
   return <>
     <section className="page-band vision-hero"><div className="container"><h1 className="section-title">{t('vision.title')}</h1><p className="section-sub vision-statement">{t('vision.sub')}</p></div></section>
     <section className="section vision-body"><div className="container" style={{ maxWidth: 820 }}>{paragraphs.map((p) => <p key={p}>{p}</p>)}</div></section>
-    <section className="section section-alt vision-principles"><div className="container">
-      <h2 className="section-title">{t('vision.standFor')}</h2>
-      <div className="card-grid vision-values">{values.map(([title, text]) => <div className="card" key={title}><div className="card__body"><h3 className="card__title">{title}</h3><p className="card__desc" style={{ margin: 0 }}>{text}</p></div></div>)}</div>
+    <section className="section section-alt vision-principles" aria-labelledby="vision-values-title"><div className="container">
+      <h2 className="section-title" id="vision-values-title">{t('vision.standFor')}</h2>
+      <p className="section-sub vision-values-subtitle">{t('vision.valuesSubtitle')}</p>
+      <div className="card-grid vision-values">
+        {values.map(([title, text]) => (
+          <article className="card" key={title}>
+            <div className="card__body">
+              <h3 className="card__title">{title}</h3>
+              <p className="card__desc">{text}</p>
+            </div>
+          </article>
+        ))}
+      </div>
       <div className="vision-actions mt-3"><Link to="/trade?tab=register&partner=regional-distributor" className="btn btn-primary">{t('vision.dealer')}</Link><Link to="/vip?tab=register" className="btn btn-outline">{t('vision.trades')}</Link></div>
     </div></section>
   </>;

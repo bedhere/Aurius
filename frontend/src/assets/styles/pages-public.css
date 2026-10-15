@@ -33,20 +33,49 @@
   margin-bottom: 0;
 }
 
+.vision-principles {
+  /* Match the official logo without changing the shared site palette. */
+  --vision-brand: #0da19f;
+}
+
 .vision-principles .section-title {
-  margin-bottom: 28px;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.vision-principles .vision-values-subtitle {
+  max-width: 720px;
+  margin-bottom: 32px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.6;
+  text-wrap: balance;
+}
+
+.vision-values .card,
+.vision-values .card:hover {
+  background: var(--white);
+  border: 1px solid var(--stone-200);
+  box-shadow: 0 2px 8px rgba(28, 25, 23, 0.035);
+  transform: none;
+  transition: none;
 }
 
 .vision-values .card__body {
   padding: 24px;
+  gap: 12px;
+  text-align: left;
 }
 
 .vision-values .card__title {
+  color: var(--vision-brand);
   font-size: 19px;
+  font-weight: 700;
   line-height: 1.4;
 }
 
 .vision-values .card__desc {
+  margin: 0;
   font-size: 16px;
   line-height: 1.7;
   color: var(--ink-soft);
@@ -72,6 +101,10 @@
   .vision-hero .section-title {
     font-size: clamp(36px, 3vw, 42px);
   }
+
+  .vision-values {
+    grid-auto-rows: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -94,6 +127,11 @@
 
   .vision-values .card__body {
     padding: 20px;
+  }
+
+  .vision-principles .vision-values-subtitle {
+    margin-bottom: 24px;
+    font-size: 17px;
   }
 
   .card-grid.vision-values,
