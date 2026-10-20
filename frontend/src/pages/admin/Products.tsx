@@ -208,7 +208,7 @@ export default function Products() {
             <div className="field"><label>Stock</label><input type="number" value={form.stock} onChange={set('stock')} /></div>
             <div className="field"><label>Status</label><select value={form.status} onChange={set('status')}><option value="ACTIVE">ACTIVE</option><option value="DRAFT">DRAFT</option><option value="ARCHIVED">ARCHIVED</option></select></div>
             <div className="field"><label>Display Style</label><input value={form.displayStyle} onChange={set('displayStyle')} /></div>
-            <div className="field"><label>Series</label><input value={form.series} onChange={set('series')} placeholder="瑞景 / 赛博" /></div>
+            <div className="field"><label>Series</label><input value={form.series} onChange={set('series')} placeholder="锐净 / 赛博" /></div>
             <div className="field"><label>RRP</label><input type="number" step="0.01" value={form.rrp} onChange={set('rrp')} /></div>
             <div className="field"><label>Giftable</label><input type="checkbox" checked={form.giftable} onChange={set('giftable')} /></div>
           </div>

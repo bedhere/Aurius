@@ -13,7 +13,6 @@ export default function Footer() {
         <div>
           <Link to="/privacy-policy">{t('footer.privacy')}</Link>
           <Link to="/terms">{t('footer.terms')}</Link>
-          <Link to="/dealer-agreement">{t('footer.dealer')}</Link>
         </div>
       </div>
     </footer>

@@ -14,7 +14,9 @@ function categoriesForFilter(filter?: string): string[] | undefined {
   if (!filter || filter === 'all') return undefined;
   switch (filter) {
     case 'toilet':
-      return ['Smart Toilet', 'Toilet Lid'];
+      return ['Smart Toilet'];
+    case 'toilet-lid':
+      return ['Toilet Lid'];
     case 'water':
       return ['Whole-House Water Purification', 'Filter Cartridge', 'Shower Filtration'];
     case 'drain':
@@ -36,12 +38,13 @@ function waterCategoriesForSubcategory(filter?: string): string[] | undefined {
 export async function listProducts(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const category = queryString(req.query.category, 'category');
-    const series = queryString(req.query.series, 'series');
+    const requestedSeries = queryString(req.query.series, 'series');
+    const series = requestedSeries === '瑞景' ? '锐净' : requestedSeries;
     const waterSubcategory = queryString(req.query.waterSubcategory, 'waterSubcategory');
     const search = queryString(req.query.search, 'search');
     const page = Math.max(1, parseInt(queryString(req.query.page, 'page') ?? '1', 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(queryString(req.query.pageSize, 'pageSize') ?? '24', 10) || 24));
-    const selectedSeries = category === 'water' && (series === '瑞景' || series === '赛博')
+    const selectedSeries = category === 'water' && (series === '锐净' || series === '赛博')
       ? series
       : undefined;
     if (category === 'water' && selectedSeries && waterSubcategory === 'filter-core') {
@@ -195,7 +198,7 @@ export async function getProduct(req: Request, res: Response, next: NextFunction
 export async function listCategories(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const groups = await prisma.product.groupBy({ by: ['category'], where: { status: ProductStatus.ACTIVE } });
-    ok(res, ['toilet', 'water', 'drain', ...groups.map((g) => g.category)]);
+    ok(res, ['toilet', 'toilet-lid', 'water', 'drain', ...groups.map((g) => g.category)]);
   } catch (err) {
     next(err);
   }

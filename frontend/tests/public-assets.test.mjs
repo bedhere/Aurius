@@ -43,9 +43,9 @@ test('floor drain detail keeps an isolated five-finish photographed configurator
 test('water product filtering exposes the two required series and filter-core group', async () => {
   const source = await (await import('node:fs/promises')).readFile(new URL('../src/pages/public/Products.tsx', import.meta.url), 'utf8');
 
-  assert.match(source, /series = searchParams\.get\('series'\) \?\? 'all'/);
+  assert.match(source, /requestedSeries = searchParams\.get\('series'\) \?\? 'all'/);
   assert.match(source, /params\.set\('series', series\)/);
-  assert.match(source, /瑞景/);
+  assert.match(source, /锐净/);
   assert.match(source, /赛博/);
   assert.match(source, /滤芯/);
 });

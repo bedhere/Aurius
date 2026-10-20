@@ -186,10 +186,32 @@ describe('Marketplace overhaul regression coverage', () => {
     expect(response.status).toBe(403);
   });
 
+  it('filters smart toilets and toilet lids independently while keeping both searchable', async () => {
+    const toiletId = await seedProduct(app, { name: 'Separate catalogue toilet' });
+    const lidId = await seedProduct(app, {
+      category: 'Toilet Lid',
+      name: 'Separate catalogue lid',
+      productCode: `LID-${Date.now()}`,
+      sku: `LID-${Date.now()}`,
+    });
+
+    const toilets = await request(app).get('/api/products').query({ category: 'toilet', search: 'Separate catalogue' });
+    const lids = await request(app).get('/api/products').query({ category: 'toilet-lid', search: 'Separate catalogue' });
+    const all = await request(app).get('/api/products').query({ search: 'Separate catalogue' });
+
+    expect(toilets.status).toBe(200);
+    expect(toilets.body.data.items.map((item: { id: number }) => item.id)).toEqual([toiletId]);
+    expect(lids.status).toBe(200);
+    expect(lids.body.data.items.map((item: { id: number }) => item.id)).toEqual([lidId]);
+    expect(lids.body.data.total).toBe(1);
+    expect(all.status).toBe(200);
+    expect(all.body.data.items.map((item: { id: number }) => item.id)).toEqual(expect.arrayContaining([toiletId, lidId]));
+  });
+
   it('filters water products by the requested named series', async () => {
     const ruijingId = await seedProduct(app, {
       category: 'Whole-House Water Purification',
-      series: '瑞景',
+      series: '锐净',
       name: 'Ruijing Water System',
       sku: `RUJING-${Date.now()}`,
     });
@@ -200,27 +222,29 @@ describe('Marketplace overhaul regression coverage', () => {
       sku: `SAIBO-${Date.now()}`,
     });
 
-    const response = await request(app).get('/api/products?category=water&series=%E7%91%9E%E6%99%AF');
+    for (const series of ['锐净', '瑞景']) {
+      const response = await request(app).get(`/api/products?category=water&series=${encodeURIComponent(series)}`);
 
-    expect(response.status).toBe(200);
-    expect(response.body.data.items).toEqual(expect.arrayContaining([
-      expect.objectContaining({ id: ruijingId, series: '瑞景' }),
-    ]));
-    expect(response.body.data.items).not.toEqual(expect.arrayContaining([
-      expect.objectContaining({ series: '赛博' }),
-    ]));
+      expect(response.status).toBe(200);
+      expect(response.body.data.items).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: ruijingId, series: '锐净' }),
+      ]));
+      expect(response.body.data.items).not.toEqual(expect.arrayContaining([
+        expect.objectContaining({ series: '赛博' }),
+      ]));
+    }
   });
 
   it('rejects repeated product filter parameters instead of broadening a water series result', async () => {
     const response = await request(app)
-      .get('/api/products?category=water&series=%E7%91%9E%E6%99%AF&series=%E8%B5%9B%E5%8D%9A');
+      .get('/api/products?category=water&series=%E9%94%90%E5%87%80&series=%E8%B5%9B%E5%8D%9A');
 
     expect(response.status).toBe(400);
   });
 
   it('rejects conflicting water series and filter-core parameters', async () => {
     const response = await request(app)
-      .get('/api/products?category=water&series=%E7%91%9E%E6%99%AF&waterSubcategory=filter-core');
+      .get('/api/products?category=water&series=%E9%94%90%E5%87%80&waterSubcategory=filter-core');
 
     expect(response.status).toBe(400);
   });
