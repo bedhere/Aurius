@@ -82,12 +82,26 @@ test('homepage carousel reserves a stable canvas and exposes accessible previous
   assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 });
 
-test('stockists uses the no-key dealer endpoint and OpenStreetMap embed', async () => {
+test('stockists provides separate state pages with multiple dealers and recruitment fallback', async () => {
   const source = await (await import('node:fs/promises')).readFile(new URL('../src/pages/public/Stockists.tsx', import.meta.url), 'utf8');
 
-  assert.match(source, /api\.get<DealerLocation\[\]>\('\/api\/dealers'\)/);
-  assert.match(source, /openstreetmap\.org\/export\/embed\.html/);
-  assert.doesNotMatch(source, /googleMapsApiKey/);
+  assert.match(source, /groupDealerLocations\(dealers\)/);
+  assert.match(source, /useParams/);
+  assert.match(source, /to=\{`\/stockists\/\$\{state\.toLowerCase\(\)\}`\}/);
+  assert.match(source, /StateDealerView/);
+  assert.match(source, /selectedGroup\.dealers/);
+  assert.match(source, /dealers\.map/);
+  assert.match(source, /stockists\.recruiting/);
+  assert.match(source, /stockists\.vacancy/);
+  assert.match(source, /<Link to="\/trade"/);
+  assert.match(source, /\/api\/dealers/);
+  assert.match(source, /<iframe/);
+  assert.match(source, /dealer\.address/);
+  assert.match(source, /dealer\.phone/);
+  assert.match(source, /dealer\.photos/);
+  assert.match(source, /setSelectedId/);
+  const app = await (await import('node:fs/promises')).readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+  assert.match(app, /path="\/stockists\/:state" element=\{<Stockists \/>\}/);
 });
 
 test('dealer seed supplies eight photo-backed Australian showrooms', async () => {

@@ -132,7 +132,7 @@ export default function DealerLocations() {
   return (
     <>
       <h2>{tAdmin('dealers')}</h2>
-      <p className="small muted">维护公共经销网点及其地图坐标；停用的网点不会显示在前台。</p>
+      <p className="small muted">启用的网点会显示在对应州的独立页面，包含照片、电话、地址与地图。同州可添加多个网点；该州全部网点停用后恢复“虚位以待”。保存后刷新公开页面即可查看更新。</p>
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       <form className="panel" onSubmit={submit}>

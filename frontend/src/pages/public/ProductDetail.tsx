@@ -215,7 +215,7 @@ export default function ProductDetail() {
             )}
 
             <div className="product-detail__dimension">
-              <h3>尺寸图</h3>
+              <h3>{t('detail.dimensions')}</h3>
               <p>{selectedFitNote}</p>
               {specs.sizes?.length ? (
                 <div className="dimension-grid">
@@ -280,6 +280,23 @@ export default function ProductDetail() {
               <Link to={guestCheckoutLink} className="btn btn-primary btn-lg">零售购买</Link>
             ) : (
               <p className="small muted">{t('detail.approval')}</p>
+            )}
+
+            {(product.dimensionImage || product.featureImage) && (
+              <div className="product-detail__diagrams">
+                {([
+                  ['dimension', product.dimensionImage, t('detail.dimensionImage')],
+                  ['feature', product.featureImage, t('detail.featureImage')],
+                ] as const).map(([key, image, label]) => image && (
+                  <section className={`product-detail__diagram product-detail__diagram--${key}`} key={key} aria-labelledby={`product-diagram-${key}`}>
+                    <h2 id={`product-diagram-${key}`}>{label}</h2>
+                    <a href={image} target="_blank" rel="noreferrer" aria-label={`${label} — ${t('detail.viewFullImage')}`}>
+                      <img src={image} alt={`${product.name} — ${label}`} loading="lazy" />
+                    </a>
+                    <span className="small muted">{t('detail.viewFullImage')}</span>
+                  </section>
+                ))}
+              </div>
             )}
 
             {isFloorDrain && (

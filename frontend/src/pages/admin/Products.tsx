@@ -27,11 +27,13 @@ interface ProductRow {
 interface ProductDetailResponse extends ProductRow {
   description: string;
   specs: Record<string, unknown> | null;
+  dimensionImage: string | null;
+  featureImage: string | null;
 }
 
 const empty = {
   productCode: '', sku: '', name: '', category: 'Smart Toilet', model: '', description: '', stock: 0, status: 'ACTIVE',
-  specs: '', displayStyle: 'carousel', series: '', promotionNote: '', dimensionSpec: '', giftable: false, sendPromotion: false,
+  specs: '', displayStyle: 'carousel', series: '', promotionNote: '', dimensionSpec: '', dimensionImage: '', featureImage: '', giftable: false, sendPromotion: false,
   level1Price: 0, level2Price: 0, level3Price: 0, retailPrice: '', promoPrice: '', waterworkerPrice: '', builderPrice: '', distributor2Price: '', dealer1Price: '', rrp: '',
 };
 
@@ -44,6 +46,7 @@ export default function Products() {
   const [images, setImages] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [uploadingDiagram, setUploadingDiagram] = useState<'dimensionImage' | 'featureImage' | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const load = () => {
@@ -57,7 +60,7 @@ export default function Products() {
 
   const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const v = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.type === 'number' ? e.target.value : e.target.value;
-    setForm({ ...form, [k]: v } as typeof empty);
+    setForm((current) => ({ ...current, [k]: v } as typeof empty));
   };
 
   const uploadImage = async (f: File) => {
@@ -65,6 +68,26 @@ export default function Products() {
     fd.append('file', f);
     const r = await api.postForm<{ url: string }>('/api/admin/products/images', fd);
     setImages([...images, r.url]);
+  };
+
+  const uploadDiagram = async (file: File, field: 'dimensionImage' | 'featureImage') => {
+    if (uploadingDiagram) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage({ type: 'error', text: '图片不能超过 10 MB。' });
+      return;
+    }
+    setUploadingDiagram(field);
+    setMessage(null);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const result = await api.postForm<{ url: string }>('/api/admin/products/images', body);
+      setForm((current) => ({ ...current, [field]: result.url }));
+    } catch (error) {
+      setMessage({ type: 'error', text: (error as ApiError).message || '图片上传失败，请重试。' });
+    } finally {
+      setUploadingDiagram(null);
+    }
   };
 
   const moveProduct = async (index: number, offset: number) => {
@@ -104,12 +127,15 @@ export default function Products() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (uploadingDiagram) return;
     setMessage(null);
     const specs = form.specs.trim() ? (() => { try { return JSON.parse(form.specs); } catch { return null; } })() : null;
     const payload = {
       ...form,
       specs,
       images,
+      dimensionImage: form.dimensionImage || null,
+      featureImage: form.featureImage || null,
       stock: Number(form.stock),
       level1Price: Number(form.level1Price),
       level2Price: Number(form.level2Price),
@@ -137,6 +163,7 @@ export default function Products() {
   };
 
   const startEdit = async (p: ProductRow) => {
+    if (uploadingDiagram) return;
     const detail = await api.get<ProductDetailResponse>(`/api/admin/products/${p.id}`).catch(() => null);
     if (!detail) {
       setMessage({ type: 'error', text: 'Unable to load product details.' });
@@ -159,6 +186,8 @@ export default function Products() {
       giftable: detail.giftable,
       promotionNote: detail.promotionNote ?? '',
       dimensionSpec: detail.dimensionSpec ?? '',
+      dimensionImage: detail.dimensionImage ?? '',
+      featureImage: detail.featureImage ?? '',
       level1Price: detail.prices?.level1 ?? 0,
       level2Price: detail.prices?.level2 ?? 0,
       level3Price: detail.prices?.level3 ?? 0,
@@ -191,7 +220,7 @@ export default function Products() {
           <option>Engineering Custom Floor Drain</option>
         </select>
         <span className="spacer" />
-        <button className="btn btn-primary btn-sm" onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(empty); setImages([]); }}>
+        <button className="btn btn-primary btn-sm" disabled={uploadingDiagram !== null} onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(empty); setImages([]); }}>
           + New Product
         </button>
       </div>
@@ -237,8 +266,31 @@ export default function Products() {
               </div>
             ))}</div>
           </div>
+          <fieldset className="product-diagram-admin" disabled={uploadingDiagram !== null}>
+            <legend>尺寸图与功能图</legend>
+            <p className="small muted">分别上传，显示在详情页购买按钮下方，不加入产品主图。支持 JPG、PNG、WebP，单张最大 10 MB；上传或移除后，请点击 Save 保存。</p>
+            <div className="form-grid-2">
+              {(['dimensionImage', 'featureImage'] as const).map((field) => (
+                <div className="field product-diagram-admin__field" key={field}>
+                  <label htmlFor={`product-${field}`}>{field === 'dimensionImage' ? '尺寸图' : '功能图'}</label>
+                  <input id={`product-${field}`} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    event.currentTarget.value = '';
+                    if (file) void uploadDiagram(file, field);
+                  }} />
+                  {uploadingDiagram === field && <span className="small muted" role="status">上传中…</span>}
+                  {form[field] ? (
+                    <div className="product-diagram-admin__preview">
+                      <a href={form[field]} target="_blank" rel="noreferrer"><img src={form[field]} alt={field === 'dimensionImage' ? '尺寸图预览' : '功能图预览'} /></a>
+                      <button className="btn btn-outline btn-sm" type="button" onClick={() => setForm((current) => ({ ...current, [field]: '' }))}>移除图片</button>
+                    </div>
+                  ) : <span className="small muted">未上传，前台不显示此区域。</span>}
+                </div>
+              ))}
+            </div>
+          </fieldset>
           <div className="field"><label>Send promotion email</label><input type="checkbox" checked={form.sendPromotion} onChange={set('sendPromotion')} /></div>
-          <button className="btn btn-primary" type="submit">Save</button>
+          <button className="btn btn-primary" type="submit" disabled={uploadingDiagram !== null}>Save</button>
         </form>
       )}
 

@@ -71,6 +71,8 @@ export interface ProductItem {
   giftable: boolean;
   promotionNote: string | null;
   dimensionSpec: string | null;
+  dimensionImage: string | null;
+  featureImage: string | null;
   stock: number;
   specs: Record<string, unknown> | null;
   variants: ProductVariant[];

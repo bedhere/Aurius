@@ -433,6 +433,8 @@ model Product {
   series       String? // RuiJing / SaiBo / etc.
   promotionNote String?
   dimensionSpec String?
+  dimensionImage String?
+  featureImage String?
   giftable     Boolean      @default(false)
   displayOrder Int          @default(0)
   stock        Int          @default(0)

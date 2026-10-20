@@ -6,6 +6,13 @@ import { ok, badRequest, conflict, notFound, created } from '../lib/response';
 import { audit } from '../services/auditService';
 import { ProductStatus } from '@prisma/client';
 import { sendProductLaunchPromotion } from '../services/reminderService';
+import { productDiagramsSchema } from '../validators/product.schema';
+
+function readProductDiagrams(body: unknown) {
+  const result = productDiagramsSchema.safeParse(body);
+  if (!result.success) throw badRequest(result.error.issues[0]?.message ?? 'Invalid product diagrams');
+  return result.data;
+}
 
 function ipOf(req: Request): string {
   return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
@@ -76,6 +83,7 @@ export async function adminListProducts(req: Request, res: Response, next: NextF
 
 export async function adminCreateProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const diagrams = readProductDiagrams(req.body);
     const body = req.body as {
       productCode: string;
       sku: string;
@@ -115,6 +123,7 @@ export async function adminCreateProduct(req: Request, res: Response, next: Next
           model: body.model ?? null,
           description: body.description,
           images: JSON.stringify(body.images ?? []),
+          ...diagrams,
           stock: body.stock ?? 0,
           status: body.status ?? ProductStatus.ACTIVE,
           specs: body.specs ? JSON.stringify(body.specs) : null,
@@ -178,6 +187,8 @@ export async function adminGetProduct(req: Request, res: Response, next: NextFun
       series: product.series,
       promotionNote: product.promotionNote,
       dimensionSpec: product.dimensionSpec,
+      dimensionImage: product.dimensionImage,
+      featureImage: product.featureImage,
       giftable: product.giftable,
       specs: product.specs ? (() => { try { return JSON.parse(product.specs); } catch { return null; } })() : null,
       images: (() => { try { return JSON.parse(product.images || '[]'); } catch { return []; } })(),
@@ -203,11 +214,12 @@ export async function adminGetProduct(req: Request, res: Response, next: NextFun
 
 export async function adminUpdateProduct(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const diagrams = readProductDiagrams(req.body);
     const id = parseInt(req.params.id, 10);
     const body = req.body as Record<string, unknown> & { sendPromotion?: boolean };
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product) throw notFound('Product not found');
-    const data: Record<string, unknown> = {};
+    const data: Record<string, unknown> = { ...diagrams };
     for (const key of ['productCode', 'sku', 'name', 'category', 'model', 'description', 'stock', 'status'] as const) {
       if (body[key] !== undefined) data[key] = body[key];
     }

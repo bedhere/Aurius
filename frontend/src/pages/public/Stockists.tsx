@@ -1,99 +1,161 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
-import { DealerLocation } from '../../api/types';
+import type { DealerLocation } from '../../api/types';
+import { Alert } from '../../components/ui';
+import { useI18n } from '../../i18n/LanguageContext';
+import { dealerMapUrl, groupDealerLocations } from '../../utils/dealer-locations';
 import { stateLabel } from '../../utils/format';
 import '../../assets/styles/pages-public.css';
 
-function mapUrl(dealer: DealerLocation): string {
-  const latitudeSpan = 0.025;
-  const longitudeSpan = 0.035;
-  const south = Math.max(-90, dealer.latitude - latitudeSpan);
-  const north = Math.min(90, dealer.latitude + latitudeSpan);
-  const west = Math.max(-180, dealer.longitude - longitudeSpan);
-  const east = Math.min(180, dealer.longitude + longitudeSpan);
-  const params = new URLSearchParams({
-    bbox: `${west},${south},${east},${north}`,
-    layer: 'mapnik',
-    marker: `${dealer.latitude},${dealer.longitude}`,
-  });
-  return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`;
-}
-
 export default function Stockists() {
+  const { t } = useI18n();
   const [dealers, setDealers] = useState<DealerLocation[]>([]);
-  const [activeId, setActiveId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retryNonce, setRetryNonce] = useState(0);
+  const { state: stateParam } = useParams<{ state: string }>();
+  const selectedState = stateParam?.toLowerCase() === 'other' ? 'other' : stateParam?.toUpperCase();
+  const groups = groupDealerLocations(dealers);
+  const selectedGroup = groups.find((group) => group.state === selectedState);
+  const stateTitle = (state: string) => {
+    const key = `stockists.state.${state}`;
+    return t(key) === key ? stateLabel(state) : t(key);
+  };
 
   useEffect(() => {
-    api.get<DealerLocation[]>('/api/dealers').then((data) => {
-      setDealers(data);
-      setActiveId(data[0]?.id ?? null);
-    }).catch(() => setDealers([]));
-  }, []);
-
-  const activeDealer = useMemo(() => dealers.find((dealer) => dealer.id === activeId) ?? dealers[0] ?? null, [dealers, activeId]);
-  const mapSrc = activeDealer ? mapUrl(activeDealer) : null;
+    let active = true;
+    setLoading(true);
+    setError(false);
+    api.get<DealerLocation[]>('/api/dealers')
+      .then((locations) => { if (active) setDealers(locations); })
+      .catch(() => { if (active) setError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [retryNonce]);
 
   return (
-    <section className="page-band page-band--dense">
-      <div className="container">
-        <h1 className="section-title">经销网点</h1>
-        <p className="section-sub">查看门店照片、电话、地址与地图位置，按门店切换即可定位。</p>
-
-        <div className="stockists-layout">
-          <div className="stockists-list">
-            {dealers.map((dealer) => (
-              <button
-                key={dealer.id}
-                type="button"
-                className={`stockist-card ${dealer.id === activeDealer?.id ? 'active' : ''}`}
-                onClick={() => setActiveId(dealer.id)}
-              >
-                <span className="stockist-card__eyebrow">{dealer.state ? stateLabel(dealer.state) : 'Dealer'}</span>
-                <strong>{dealer.name}</strong>
-                {dealer.phone && <span>{dealer.phone}</span>}
-                <span>{dealer.address}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="stockists-detail">
-            {activeDealer ? (
-              <>
-                <div className="stockists-detail__hero">
-                  {activeDealer.photos[0] ? <img src={activeDealer.photos[0]} alt={activeDealer.name} /> : <div className="stockists-detail__placeholder">No photo</div>}
-                </div>
-                <div className="stockists-detail__info">
-                  <h2>{activeDealer.name}</h2>
-                  {activeDealer.phone && <p>{activeDealer.phone}</p>}
-                  <p>{activeDealer.address}</p>
-                  {activeDealer.note && <p>{activeDealer.note}</p>}
-                  {activeDealer.photos.length > 1 && (
-                    <div className="stockists-photo-strip">
-                      {activeDealer.photos.slice(1).map((photo) => <img key={photo} src={photo} alt={activeDealer.name} />)}
-                    </div>
-                  )}
-                  <Link to="/trade" className="btn btn-primary btn-sm">成为合作伙伴</Link>
-                </div>
-                <div className="stockists-detail__map">
-                  {mapSrc ? (
-                    <iframe
-                      title={`${activeDealer.name} map`}
-                      src={mapSrc}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="stockists-detail__placeholder">No dealer locations configured.</div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="stockists-detail__placeholder">No dealer locations configured.</div>
-            )}
-          </div>
+    <>
+      <section className="page-band page-band--dense">
+        <div className="container">
+          <h1 className="section-title">{selectedGroup ? stateTitle(selectedGroup.state) : t('stockists.title')}</h1>
+          <p className="section-sub">{t(selectedState ? 'stockists.stateSub' : 'stockists.sub')}</p>
         </div>
+      </section>
+      <section className="section stockists-recruitment" aria-label={t('stockists.regions')}>
+        <div className="container">
+          {selectedState && <Link className="stockists-back" to="/stockists">← {t('stockists.backStates')}</Link>}
+          {loading ? <div className="page-loading">{t('common.loading')}</div> : error ? (
+            <Alert type="error">
+              <p>{t('stockists.loadFailed')}</p>
+              <button className="btn btn-outline btn-sm" onClick={() => setRetryNonce((value) => value + 1)}>{t('common.retry')}</button>
+            </Alert>
+          ) : selectedState ? selectedGroup ? (
+            <StateDealerView key={selectedGroup.state} state={selectedGroup.state} dealers={selectedGroup.dealers} title={stateTitle(selectedGroup.state)} />
+          ) : <p role="status">{t('stockists.regionNotFound')}</p> : (
+            <div className="stockists-state-grid">
+              {groups.map((group) => <StatePartnerCard key={group.state} state={group.state} dealers={group.dealers} />)}
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function StatePartnerCard({ state, dealers }: { state: string; dealers: DealerLocation[] }) {
+  const { t } = useI18n();
+  const titleKey = `stockists.state.${state}`;
+  const translatedTitle = t(titleKey);
+  const title = translatedTitle === titleKey ? stateLabel(state) : translatedTitle;
+
+  return (
+    <article className="stockist-state-card" aria-labelledby={`stockist-state-${state}`}>
+      <header className="stockist-state-card__header">
+        {state !== 'other' && <span className="stockist-state-card__code">{state}</span>}
+        <h2 id={`stockist-state-${state}`}>{title}</h2>
+      </header>
+      {dealers.length > 0 ? (
+        <>
+          <span className="stockist-state-card__status">{t('stockists.available')} · {dealers.length}</span>
+          <h3>{t('stockists.localNetwork')}</h3>
+          <p>{t('stockists.viewStateIntro')}</p>
+        </>
+      ) : (
+        <>
+          <span className="stockist-state-card__status">{t('stockists.recruiting')}</span>
+          <h3>{t('stockists.vacancy')}</h3>
+          <p>{t('stockists.invitation')}</p>
+        </>
+      )}
+      <Link to={`/stockists/${state.toLowerCase()}`} className="btn btn-outline btn-sm" aria-label={`${t('stockists.viewState')} — ${title}`}>{t('stockists.viewState')}</Link>
+    </article>
+  );
+}
+
+function StateDealerView({ state, dealers, title }: { state: string; dealers: DealerLocation[]; title: string }) {
+  const { t } = useI18n();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const dealer = dealers.find((entry) => entry.id === selectedId) ?? dealers[0];
+
+  if (!dealer) return (
+    <div className="stockist-state-card stockists-state-vacancy">
+      <span className="stockist-state-card__status">{t('stockists.recruiting')}</span>
+      <h2>{t('stockists.vacancy')}</h2>
+      <p>{t('stockists.invitation')}</p>
+      <Link to="/trade" className="btn btn-outline btn-sm" aria-label={`${t('stockists.apply')} — ${title}`}>{t('stockists.apply')}</Link>
+    </div>
+  );
+
+  return (
+    <div className="stockists-state-layout">
+      <nav className="stockists-dealer-list" aria-label={`${title} — ${t('stockists.selectDealer')}`}>
+        <h2>{t('stockists.selectDealer')} · {dealers.length}</h2>
+        <div className="stockists-dealer-list__items">
+          {dealers.map((entry) => (
+            <button className={`stockist-dealer-choice${entry.id === dealer.id ? ' active' : ''}`} key={entry.id} type="button" aria-pressed={entry.id === dealer.id} aria-controls={`stockist-details-${state}`} onClick={() => setSelectedId(entry.id)}>
+              <strong>{entry.name}</strong>
+              <span>{[entry.address, entry.city].filter(Boolean).join(', ')}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
+      <section className="stockists-selected-dealer" id={`stockist-details-${state}`} aria-label={dealer.name}>
+        <DealerDetails key={dealer.id} dealer={dealer} />
+      </section>
+    </div>
+  );
+}
+
+function DealerDetails({ dealer }: { dealer: DealerLocation }) {
+  const { t } = useI18n();
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const mapSrc = dealerMapUrl(dealer);
+  return (
+    <div className="stockist-dealer-details">
+      <div className="stockist-dealer-media">
+        <div className="stockist-dealer-photo">
+          {dealer.photos[0] && !photoFailed ? (
+            <img src={dealer.photos[0]} alt={dealer.name} loading="lazy" onError={() => setPhotoFailed(true)} />
+          ) : <span>{t('stockists.noPhoto')}</span>}
+        </div>
+        {dealer.photos.length > 1 && (
+          <div className="stockist-dealer-photos">
+            {dealer.photos.slice(1).map((photo) => <img key={photo} src={photo} alt={dealer.name} loading="lazy" />)}
+          </div>
+        )}
       </div>
-    </section>
+      <div className="stockist-dealer-info">
+        <h2>{dealer.name}</h2>
+        <address className="stockist-dealer-contact">
+          {dealer.phone && <a href={`tel:${dealer.phone.replace(/[^\d+]/g, '')}`}>{dealer.phone}</a>}
+          <span>{[dealer.address, dealer.city, dealer.state].filter(Boolean).join(', ')}</span>
+        </address>
+        {dealer.note && <p>{dealer.note}</p>}
+        {mapSrc ? (
+          <iframe className="stockist-dealer-map" title={`${dealer.name} — ${t('stockists.map')}`} src={mapSrc} loading="lazy" referrerPolicy="no-referrer" />
+        ) : <p>{t('stockists.noMap')}</p>}
+      </div>
+    </div>
   );
 }

@@ -111,6 +111,8 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
           giftable: (p as any).giftable ?? false,
           promotionNote: p.promotionNote,
           dimensionSpec: p.dimensionSpec,
+          dimensionImage: p.dimensionImage,
+          featureImage: p.featureImage,
           stock: p.stock,
           specs: p.specs ? (() => { try { return JSON.parse(p.specs); } catch { return null; } })() : null,
           variants: p.variants.map((variant) => ({
@@ -173,6 +175,8 @@ export async function getProduct(req: Request, res: Response, next: NextFunction
       giftable: (p as any).giftable ?? false,
       promotionNote: p.promotionNote,
       dimensionSpec: p.dimensionSpec,
+      dimensionImage: p.dimensionImage,
+      featureImage: p.featureImage,
       stock: p.stock,
       specs: p.specs ? (() => { try { return JSON.parse(p.specs); } catch { return null; } })() : null,
       variants: p.variants.map((variant) => ({

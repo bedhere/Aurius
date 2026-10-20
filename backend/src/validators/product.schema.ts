@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+const productDiagramPath = z.string().trim().max(1000)
+  .regex(/^\/(?:uploads\/products|products)\/[a-z0-9][a-z0-9._-]*\.(?:png|jpe?g|webp)$/i, 'Select a valid uploaded product image')
+  .nullable().optional();
+
+export const productDiagramsSchema = z.object({
+  dimensionImage: productDiagramPath,
+  featureImage: productDiagramPath,
+});
+
 export const productSchema = z.object({
   productCode: z.string().min(1).max(50),
   sku: z.string().min(1).max(50),

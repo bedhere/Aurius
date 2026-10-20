@@ -57,13 +57,15 @@ export function createApp(): Express {
   const uploadsRoot = config.uploadPath;
   fs.mkdirSync(path.join(uploadsRoot, 'brand'), { recursive: true });
   fs.mkdirSync(path.join(uploadsRoot, 'products'), { recursive: true });
+  fs.mkdirSync(path.join(uploadsRoot, 'dealers'), { recursive: true });
   fs.mkdirSync(path.join(uploadsRoot, 'licences'), { recursive: true });
   fs.mkdirSync(path.join(uploadsRoot, 'receipts'), { recursive: true });
   fs.mkdirSync(path.join(uploadsRoot, 'downloads'), { recursive: true });
-  // Brand and product images are publicly servable; licences/receipts/downloads
+  // Brand, product and dealer images are publicly servable; licences/receipts/downloads
   // are accessed through authenticated controllers.
   app.use('/uploads/brand', express.static(path.join(uploadsRoot, 'brand')));
   app.use('/uploads/products', express.static(path.join(uploadsRoot, 'products')));
+  app.use('/uploads/dealers', express.static(path.join(uploadsRoot, 'dealers')));
 
   app.use('/api', routes);
 

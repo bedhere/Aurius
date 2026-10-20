@@ -63,6 +63,7 @@ export default function App() {
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/guest-checkout" element={<GuestCheckout />} />
             <Route path="/stockists" element={<Stockists />} />
+            <Route path="/stockists/:state" element={<Stockists />} />
             <Route path="/support" element={<Support />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
