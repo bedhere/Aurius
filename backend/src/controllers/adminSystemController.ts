@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { ok, badRequest, notFound } from '../lib/response';
 import { getPerformanceStats } from '../services/performanceService';
 import { audit } from '../services/auditService';
+import path from 'node:path';
 
 function ipOf(req: Request): string {
   return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
@@ -11,6 +12,15 @@ function ipOf(req: Request): string {
 // --- Settings ---------------------------------------------------------------
 
 const SETTING_KEYS = ['BANK_ACCOUNT', 'SHIPPING_METHODS', 'COMPANY_CONTACT', 'HOMEPAGE_MEDIA', 'DEALER_LOCATIONS'];
+
+export async function uploadHomepageImage(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.file) throw badRequest('No file uploaded');
+    ok(res, { url: `/uploads/brand/${path.basename(req.file.path)}` }, 'Image uploaded');
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function getSettings(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

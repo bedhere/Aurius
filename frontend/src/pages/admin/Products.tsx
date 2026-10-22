@@ -3,6 +3,7 @@ import { api, ApiError } from '../../api/client';
 import { Alert, Pagination } from '../../components/ui';
 import { statusBadgeClass } from '../../utils/format';
 import { tAdmin } from '../../i18n/strings';
+import { usesRemoteOnlyPresentation } from '../../utils/product-media';
 import '../../assets/styles/pages-admin.css';
 
 interface ProductRow {
@@ -28,12 +29,13 @@ interface ProductDetailResponse extends ProductRow {
   description: string;
   specs: Record<string, unknown> | null;
   dimensionImage: string | null;
+  remoteImage: string | null;
   featureImage: string | null;
 }
 
 const empty = {
   productCode: '', sku: '', name: '', category: 'Smart Toilet', model: '', description: '', stock: 0, status: 'ACTIVE',
-  specs: '', displayStyle: 'carousel', series: '', promotionNote: '', dimensionSpec: '', dimensionImage: '', featureImage: '', giftable: false, sendPromotion: false,
+  specs: '', displayStyle: 'carousel', series: '', promotionNote: '', dimensionSpec: '', remoteImage: '', dimensionImage: '', featureImage: '', giftable: false, sendPromotion: false,
   level1Price: 0, level2Price: 0, level3Price: 0, retailPrice: '', promoPrice: '', waterworkerPrice: '', builderPrice: '', distributor2Price: '', dealer1Price: '', rrp: '',
 };
 
@@ -46,7 +48,7 @@ export default function Products() {
   const [images, setImages] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [uploadingDiagram, setUploadingDiagram] = useState<'dimensionImage' | 'featureImage' | null>(null);
+  const [uploadingDiagram, setUploadingDiagram] = useState<'remoteImage' | 'dimensionImage' | 'featureImage' | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const load = () => {
@@ -70,7 +72,7 @@ export default function Products() {
     setImages([...images, r.url]);
   };
 
-  const uploadDiagram = async (file: File, field: 'dimensionImage' | 'featureImage') => {
+  const uploadDiagram = async (file: File, field: 'remoteImage' | 'dimensionImage' | 'featureImage') => {
     if (uploadingDiagram) return;
     if (file.size > 10 * 1024 * 1024) {
       setMessage({ type: 'error', text: '图片不能超过 10 MB。' });
@@ -134,6 +136,7 @@ export default function Products() {
       ...form,
       specs,
       images,
+      remoteImage: form.remoteImage || null,
       dimensionImage: form.dimensionImage || null,
       featureImage: form.featureImage || null,
       stock: Number(form.stock),
@@ -186,6 +189,7 @@ export default function Products() {
       giftable: detail.giftable,
       promotionNote: detail.promotionNote ?? '',
       dimensionSpec: detail.dimensionSpec ?? '',
+      remoteImage: detail.remoteImage ?? '',
       dimensionImage: detail.dimensionImage ?? '',
       featureImage: detail.featureImage ?? '',
       level1Price: detail.prices?.level1 ?? 0,
@@ -258,6 +262,7 @@ export default function Products() {
           <div className="field"><label>Specs (JSON, optional)</label><textarea value={form.specs} onChange={set('specs')} placeholder='{"sizes":["S86","S90"],"colors":["White"],"features":["Heated Seat"]}' /></div>
           <div className="field">
             <label>Images</label>
+            {usesRemoteOnlyPresentation(form) && <p className="small muted">智能马桶前台仅显示下方的“遥控器图片”，此处的实物图不会显示在商品列表、详情页或购物车。</p>}
             <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }} />
             <div className="flex gap-1 wrap mt-1">{images.map((u, index) => (
               <div className="product-image" key={`${u}-${index}`}>
@@ -267,12 +272,12 @@ export default function Products() {
             ))}</div>
           </div>
           <fieldset className="product-diagram-admin" disabled={uploadingDiagram !== null}>
-            <legend>尺寸图与功能图</legend>
-            <p className="small muted">分别上传，显示在详情页购买按钮下方，不加入产品主图。支持 JPG、PNG、WebP，单张最大 10 MB；上传或移除后，请点击 Save 保存。</p>
+            <legend>遥控器、尺寸图与功能图</legend>
+            <p className="small muted">智能马桶使用独立的遥控器图片作为前台主图；尺寸图在详情页信息区显示。马桶和马桶盖的功能图在详情页下方通栏放大显示。支持 JPG、PNG、WebP，单张最大 10 MB；上传新图可替换，移除后不再显示原图，请点击 Save 保存。</p>
             <div className="form-grid-2">
-              {(['dimensionImage', 'featureImage'] as const).map((field) => (
+              {(['remoteImage', 'dimensionImage', 'featureImage'] as const).map((field) => (
                 <div className="field product-diagram-admin__field" key={field}>
-                  <label htmlFor={`product-${field}`}>{field === 'dimensionImage' ? '尺寸图' : '功能图'}</label>
+                  <label htmlFor={`product-${field}`}>{field === 'remoteImage' ? '遥控器图片（智能马桶主图）' : field === 'dimensionImage' ? '尺寸图' : '功能图'}</label>
                   <input id={`product-${field}`} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
                     event.currentTarget.value = '';
@@ -281,10 +286,10 @@ export default function Products() {
                   {uploadingDiagram === field && <span className="small muted" role="status">上传中…</span>}
                   {form[field] ? (
                     <div className="product-diagram-admin__preview">
-                      <a href={form[field]} target="_blank" rel="noreferrer"><img src={form[field]} alt={field === 'dimensionImage' ? '尺寸图预览' : '功能图预览'} /></a>
+                      <a href={form[field]} target="_blank" rel="noreferrer"><img src={form[field]} alt={field === 'remoteImage' ? '遥控器预览' : field === 'dimensionImage' ? '尺寸图预览' : '功能图预览'} /></a>
                       <button className="btn btn-outline btn-sm" type="button" onClick={() => setForm((current) => ({ ...current, [field]: '' }))}>移除图片</button>
                     </div>
-                  ) : <span className="small muted">未上传，前台不显示此区域。</span>}
+                  ) : <span className="small muted">{field === 'remoteImage' ? '未上传遥控器，智能马桶前台显示缺图占位，不会回退到实物图。' : '未上传，前台不显示此区域。'}</span>}
                 </div>
               ))}
             </div>

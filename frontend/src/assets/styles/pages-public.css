@@ -276,6 +276,24 @@
   object-fit: cover;
 }
 
+.card__img--remote {
+  background: #fff;
+}
+
+.card__img--remote img {
+  object-fit: contain;
+  padding: 16px;
+}
+
+.product-detail__img--remote {
+  background: #fff;
+}
+
+.product-detail__img--remote > img {
+  object-fit: contain;
+  padding: 20px;
+}
+
 .product-detail__stage {
   min-height: 420px;
   display: grid;
@@ -342,6 +360,81 @@
   margin: 0 0 8px;
 }
 
+.product-detail__price-row {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.installment-entry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.installment-entry img {
+  display: block;
+  width: 110px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.installment-entry:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 4px;
+}
+
+.installment-dialog {
+  width: min(420px, calc(100% - 40px));
+  max-height: calc(100% - 40px);
+  padding: 28px;
+  border: 1px solid var(--stone-200);
+  border-radius: var(--radius);
+  color: var(--ink);
+  background: var(--white);
+  box-shadow: var(--shadow-lg);
+}
+
+.installment-dialog::backdrop {
+  background: rgba(28, 25, 23, 0.45);
+}
+
+.installment-dialog h2 {
+  font-size: 20px;
+}
+
+.installment-dialog p {
+  color: var(--ink-soft);
+}
+
+.product-warranty {
+  width: min(260px, 100%);
+  /* Original artwork: 1468 × 1919. Each badge is 818px high;
+     top/bottom alignment removes the 283px gap without altering the artwork. */
+  aspect-ratio: 1468 / 818;
+  overflow: hidden;
+  margin-top: 24px;
+  background-image: url('/brand/warranty-badges.png');
+  background-repeat: no-repeat;
+  background-size: 100% auto;
+}
+
+.product-warranty--water {
+  background-position: left top;
+}
+
+.product-warranty--toilet {
+  background-position: left bottom;
+}
+
 .product-detail__diagrams {
   display: grid;
   gap: 20px;
@@ -377,6 +470,19 @@
   height: auto;
   max-height: 420px;
   object-fit: contain;
+}
+
+.product-detail__diagram--wide {
+  width: 90%;
+  max-width: 1800px;
+  margin: 40px auto 0;
+  padding: 20px;
+}
+
+.product-detail__diagram--wide img {
+  max-height: none;
+  width: 100%;
+  height: auto;
 }
 
 .dimension-grid {
@@ -1484,42 +1590,28 @@
   object-fit: contain;
 }
 
-.aurius-home__nav-button {
+.aurius-home__playback {
   position: absolute;
-  top: 50%;
+  top: 8px;
+  left: 0;
   z-index: 2;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.28);
-  color: rgba(31, 42, 40, 0.9);
-  font-size: 34px;
-  line-height: 1;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 0;
+  background: #fff;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
-  backdrop-filter: blur(5px);
-  display: grid;
-  place-items: center;
-  transform: translateY(-50%);
-  transition: background-color 180ms ease, border-color 180ms ease, transform 180ms ease;
 }
 
-.aurius-home__nav-button:hover {
-  border-color: rgba(255, 255, 255, 0.82);
-  background: rgba(255, 255, 255, 0.5);
+.aurius-home__playback:hover {
+  color: var(--brand-dark);
 }
 
-.aurius-home__nav-button:focus-visible {
+.aurius-home__playback:focus-visible {
   outline: 3px solid rgba(30, 114, 99, 0.8);
   outline-offset: 3px;
-}
-
-.aurius-home__nav-button--previous {
-  left: 20px;
-}
-
-.aurius-home__nav-button--next {
-  right: 20px;
 }
 
 @media (max-width: 900px) {
@@ -1541,19 +1633,11 @@
     margin-bottom: 12px;
   }
 
-  .aurius-home__nav-button--previous {
-    left: 10px;
-  }
-
-  .aurius-home__nav-button--next {
-    right: 10px;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .aurius-home__slide,
-  .aurius-home__quality,
-  .aurius-home__nav-button {
+  .aurius-home__quality {
     transition: none;
   }
 }

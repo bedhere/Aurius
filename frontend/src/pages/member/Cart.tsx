@@ -5,6 +5,7 @@ import { Cart } from '../../api/types';
 import { Alert, Spinner } from '../../components/ui';
 import { fmtMoney } from '../../utils/format';
 import { formatVariantSelection } from '../../utils/variant';
+import { productThumbnail, usesRemoteOnlyPresentation } from '../../utils/product-media';
 import '../../assets/styles/pages-member.css';
 
 export default function CartPage() {
@@ -55,7 +56,7 @@ export default function CartPage() {
           <div className="panel">
             {cart.items.map((i) => (
               <div className="cart-line" key={i.id}>
-                <img src={i.image ?? '/favicon.svg'} alt={i.name} />
+                <img src={productThumbnail(i)} alt={i.name} style={usesRemoteOnlyPresentation(i) ? { objectFit: 'contain' } : undefined} />
                 <div>
                   <div>{i.name}</div>
                   <div className="small muted">

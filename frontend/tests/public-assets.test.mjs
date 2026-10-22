@@ -66,19 +66,20 @@ test('smart-toilet carousel renders its concise promotion note below the image',
   assert.match(source, /product-detail__carousel-note/);
 });
 
-test('homepage carousel reserves a stable canvas and exposes accessible previous and next controls', async () => {
+test('homepage carousel keeps its canvas, advances every five seconds and replaces arrows with playback control', async () => {
   const { readFile } = await import('node:fs/promises');
   const [home, styles] = await Promise.all([
     readFile(new URL('../src/pages/public/Home.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/assets/styles/pages-public.css', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(home, /aria-label="Previous slide"/);
-  assert.match(home, /aria-label="Next slide"/);
+  assert.doesNotMatch(home, /Previous slide|Next slide|aurius-home__nav-button/);
+  assert.match(home, /setInterval\([\s\S]*5000\)/);
+  assert.match(home, /aria-pressed=\{paused\}/);
+  assert.doesNotMatch(home, /onMouseEnter/);
   assert.match(home, /aurius-home__slide--active/);
   assert.match(styles, /\.aurius-home__slide-stage\s*\{[\s\S]*aspect-ratio:\s*2\.85\s*\/\s*1/);
   assert.match(styles, /\.aurius-home__slide,\s*\.aurius-home__quality\s*\{[\s\S]*transition:\s*opacity\s+320ms\s+ease-in-out/);
-  assert.match(styles, /\.aurius-home__nav-button\s*\{[\s\S]*border-radius:\s*50%/);
   assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 });
 

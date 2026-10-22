@@ -120,6 +120,50 @@
   background: var(--white);
 }
 
+.homepage-media-editor {
+  min-width: 0;
+}
+
+.homepage-media-editor legend {
+  padding: 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.homepage-media-editor__item {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid var(--stone-200);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+
+.homepage-media-editor__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.homepage-media-editor__actions strong {
+  margin-right: auto;
+}
+
+.homepage-media-editor input[type='file'] {
+  width: 100%;
+}
+
+.homepage-media-editor__preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2.85 / 1;
+  object-fit: cover;
+  margin-top: 12px;
+  border: 1px solid var(--stone-200);
+  background: var(--stone-50);
+}
+
 .file-preview a {
   color: var(--brand);
 }

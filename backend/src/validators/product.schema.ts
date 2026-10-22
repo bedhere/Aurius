@@ -5,6 +5,7 @@ const productDiagramPath = z.string().trim().max(1000)
   .nullable().optional();
 
 export const productDiagramsSchema = z.object({
+  remoteImage: productDiagramPath,
   dimensionImage: productDiagramPath,
   featureImage: productDiagramPath,
 });

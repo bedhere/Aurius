@@ -152,6 +152,7 @@ router.get('/admin/audit-logs', requireAuth, requireAdmin, adminSystem.auditLogs
 router.get('/admin/security-logs', requireAuth, requireAdmin, adminSystem.securityLogs);
 router.get('/admin/settings', requireAuth, requireAdmin, adminSystem.getSettings);
 router.put('/admin/settings', requireAuth, requireAdmin, adminSystem.updateSettings);
+router.post('/admin/settings/homepage-images', requireAuth, requireAdmin, uploadSub('brand'), imageUpload.single('file'), adminSystem.uploadHomepageImage);
 
 router.get('/admin/dealers', requireAuth, requireAdmin, dealers.listAdminDealerLocations);
 router.post('/admin/dealers', requireAuth, requireAdmin, validate(dealerLocationSchema), dealers.createDealerLocation);

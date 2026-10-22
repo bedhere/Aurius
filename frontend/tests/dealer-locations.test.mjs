@@ -9,16 +9,26 @@ test('populated states and empty recruitment states coexist and inactive dealers
     { id: 3, state: 'TAS', active: false },
     { id: 4, state: ' vic ', active: true },
   ]);
-  assert.deepEqual(groups.map(({ state }) => state), ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS']);
-  assert.deepEqual(groups.map(({ dealers }) => dealers.length), [2, 1, 0, 0, 0, 0]);
+  assert.deepEqual(groups.map(({ state }) => state), ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT']);
+  assert.deepEqual(groups.map(({ dealers }) => dealers.length), [2, 1, 0, 0, 0, 0, 0, 0]);
   assert.deepEqual(groups[0].dealers.map(({ id }) => id), [1, 2]);
   assert.equal(groupDealerLocations([{ id: 1, state: 'NSW', active: false }])[0].dealers.length, 0);
 });
 
-test('territories and unassigned active dealers are retained without adding empty territory cards', () => {
-  const groups = groupDealerLocations([{ id: 1, state: 'ACT', active: true }, { id: 2, state: null, active: true }]);
-  assert.equal(groups.length, 8);
-  assert.deepEqual(groups.slice(6).map(({ state }) => state), ['ACT', 'other']);
+test('both territories always appear and active dealers join the existing territory groups', () => {
+  const emptyGroups = groupDealerLocations([]);
+  assert.equal(emptyGroups.length, 8);
+  assert.deepEqual(emptyGroups.slice(6), [{ state: 'ACT', dealers: [] }, { state: 'NT', dealers: [] }]);
+
+  const groups = groupDealerLocations([
+    { id: 1, state: 'ACT', active: true },
+    { id: 2, state: null, active: true },
+    { id: 3, state: ' nt ', active: true },
+    { id: 4, state: 'NT', active: false },
+  ]);
+  assert.equal(groups.length, 9);
+  assert.deepEqual(groups.slice(6).map(({ state }) => state), ['ACT', 'NT', 'other']);
+  assert.deepEqual(groups.slice(6).map(({ dealers }) => dealers.map(({ id }) => id)), [[1], [3], [2]]);
 });
 
 test('the map marker follows the selected dealer coordinates and bounds stay valid', () => {

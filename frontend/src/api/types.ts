@@ -72,6 +72,7 @@ export interface ProductItem {
   promotionNote: string | null;
   dimensionSpec: string | null;
   dimensionImage: string | null;
+  remoteImage?: string | null;
   featureImage: string | null;
   stock: number;
   specs: Record<string, unknown> | null;
@@ -160,6 +161,8 @@ export interface CartItem {
   productId: number;
   name: string;
   sku: string;
+  category?: string;
+  remoteImage?: string | null;
   image: string | null;
   variantId: number | null;
   variantName: string | null;

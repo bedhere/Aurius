@@ -1,6 +1,6 @@
 import type { DealerLocation } from '../api/types';
 
-export const partnerStates = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS'] as const;
+export const partnerStates = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const;
 
 export function groupDealerLocations(locations: DealerLocation[]) {
   const groups: { state: string; dealers: DealerLocation[] }[] = partnerStates.map((state) => ({ state, dealers: [] }));

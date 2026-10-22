@@ -5,6 +5,7 @@ import { ProductItem } from '../../api/types';
 import { Alert, Pagination, PriceDisplay } from '../../components/ui';
 import { useI18n } from '../../i18n/LanguageContext';
 import { groupOverviewProducts, loadProductOverview, ProductPage } from '../../utils/product-catalogue';
+import { productThumbnail, usesRemoteOnlyPresentation } from '../../utils/product-media';
 import '../../assets/styles/pages-public.css';
 
 export default function Products() {
@@ -100,8 +101,8 @@ export default function Products() {
 
   const renderProductCard = (product: ProductItem) => (
     <div className="card" key={product.id}>
-      <Link to={`/products/${product.id}`} className="card__img">
-        <img src={product.images[0] ?? '/favicon.svg'} alt={product.name} loading="lazy" />
+      <Link to={`/products/${product.id}`} className={`card__img${usesRemoteOnlyPresentation(product) ? ' card__img--remote' : ''}`}>
+        <img src={productThumbnail(product)} alt={usesRemoteOnlyPresentation(product) ? `${product.name} — ${t('detail.remoteControl')}` : product.name} loading="lazy" />
       </Link>
       <div className="card__body">
         <span className="card__cat">{categoryLabel(product.category)}</span>

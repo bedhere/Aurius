@@ -39,6 +39,8 @@ export async function getCart(req: Request, res: Response, next: NextFunction): 
         productId: item.productId,
         name: item.product.name,
         sku: item.product.sku,
+        category: item.product.category,
+        remoteImage: item.product.remoteImage,
         image: (() => { try { return JSON.parse(item.product.images || '[]')[0]; } catch { return null; } })(),
         variantId: item.variantId,
         variantName: item.variantName,

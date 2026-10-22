@@ -3,8 +3,11 @@ import { Link, useParams } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
 import { ProductItem, ProductVariant } from '../../api/types';
 import { Alert, PageLoading, PriceDisplay } from '../../components/ui';
+import ProductWarrantyBadge from '../../components/ProductWarrantyBadge';
+import InstallmentPaymentEntry from '../../components/InstallmentPaymentEntry';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n/LanguageContext';
+import { productGallery, usesRemoteOnlyPresentation, usesWideFeaturePresentation } from '../../utils/product-media';
 import '../../assets/styles/pages-public.css';
 
 interface Specs {
@@ -106,10 +109,14 @@ export default function ProductDetail() {
   }
 
   const inStock = product.stock > 0;
-  const isFloorDrain = product.productCode === FLOOR_DRAIN_CODE
+  const remoteOnly = usesRemoteOnlyPresentation(product);
+  const wideFeature = usesWideFeaturePresentation(product);
+  const dimensionImage = product.dimensionImage;
+  const featureImage = product.featureImage;
+  const isFloorDrain = !remoteOnly && (product.productCode === FLOOR_DRAIN_CODE
     || (typeof product.category === 'string' && product.category.toLowerCase().includes('drain'))
-    || product.displayStyle === 'engineering';
-  const gallery = Array.isArray(product.images) ? product.images.filter((image): image is string => typeof image === 'string' && image.length > 0) : [];
+    || product.displayStyle === 'engineering');
+  const gallery = productGallery(product);
   const safeGallery = gallery.length > 0 ? gallery : ['/favicon.svg'];
   const activeGallery = safeGallery[activeImage] ?? safeGallery[0];
   const variants = Array.isArray(product.variants) ? product.variants : [];
@@ -189,14 +196,14 @@ export default function ProductDetail() {
 
         <div className="product-detail mt-2">
           <div>
-            <div className="product-detail__img">
+            <div className={`product-detail__img${remoteOnly ? ' product-detail__img--remote' : ''}`}>
               {isFloorDrain ? (
                 <div className="product-detail__stage">
                   <img src={selectedDrainImage} alt={`${product.name} - ${selectedFinishName}`} />
                 </div>
               ) : (
                 <>
-                  <img src={activeGallery} alt={product.name} />
+                  <img src={activeGallery} alt={remoteOnly ? `${product.name} — ${t('detail.remoteControl')}` : product.name} />
                   {safeGallery.length > 1 && (
                     <div className="product-detail__thumbs">
                       {safeGallery.map((image, index) => (
@@ -238,7 +245,10 @@ export default function ProductDetail() {
             {product.giftable && <p className="badge badge-green">可作为赠品</p>}
 
             <div className="mb-2">
-              <PriceDisplay price={product.price} prices={product.prices} rrp={product.rrp} priceNote={product.priceNote} stock={product.stock} />
+              <div className="product-detail__price-row">
+                <PriceDisplay price={product.price} prices={product.prices} rrp={product.rrp} priceNote={product.priceNote} stock={product.stock} />
+                <InstallmentPaymentEntry />
+              </div>
               <div className="mt-1">
                 {inStock ? <span className="badge badge-green">{t('common.inStock')} ({product.stock} {t('common.units')})</span> : <span className="badge badge-red">{t('common.outOfStock')}</span>}
               </div>
@@ -282,11 +292,13 @@ export default function ProductDetail() {
               <p className="small muted">{t('detail.approval')}</p>
             )}
 
-            {(product.dimensionImage || product.featureImage) && (
+            <ProductWarrantyBadge category={product.category} />
+
+            {(dimensionImage || (!wideFeature && featureImage)) && (
               <div className="product-detail__diagrams">
                 {([
-                  ['dimension', product.dimensionImage, t('detail.dimensionImage')],
-                  ['feature', product.featureImage, t('detail.featureImage')],
+                  ['dimension', dimensionImage, t('detail.dimensionImage')],
+                  ['feature', wideFeature ? null : featureImage, t('detail.featureImage')],
                 ] as const).map(([key, image, label]) => image && (
                   <section className={`product-detail__diagram product-detail__diagram--${key}`} key={key} aria-labelledby={`product-diagram-${key}`}>
                     <h2 id={`product-diagram-${key}`}>{label}</h2>
@@ -387,6 +399,15 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+      {wideFeature && featureImage && (
+          <section className="product-detail__diagram product-detail__diagram--wide" aria-labelledby="product-feature-strip-title">
+            <h2 id="product-feature-strip-title">{t('detail.featureImage')}</h2>
+            <a href={featureImage} target="_blank" rel="noreferrer" aria-label={`${t('detail.featureImage')} — ${t('detail.viewFullImage')}`}>
+              <img src={featureImage} alt={`${product.name} — ${t('detail.featureImage')}`} loading="lazy" />
+            </a>
+            <span className="small muted">{t('detail.viewFullImage')}</span>
+          </section>
+      )}
     </section>
   );
 }

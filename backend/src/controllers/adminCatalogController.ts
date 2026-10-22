@@ -188,6 +188,7 @@ export async function adminGetProduct(req: Request, res: Response, next: NextFun
       promotionNote: product.promotionNote,
       dimensionSpec: product.dimensionSpec,
       dimensionImage: product.dimensionImage,
+      remoteImage: product.remoteImage,
       featureImage: product.featureImage,
       giftable: product.giftable,
       specs: product.specs ? (() => { try { return JSON.parse(product.specs); } catch { return null; } })() : null,

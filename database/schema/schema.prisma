@@ -434,6 +434,7 @@ model Product {
   promotionNote String?
   dimensionSpec String?
   dimensionImage String?
+  remoteImage String?
   featureImage String?
   giftable     Boolean      @default(false)
   displayOrder Int          @default(0)
