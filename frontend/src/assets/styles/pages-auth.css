@@ -63,3 +63,10 @@
   margin: 18px 0;
   font-size: 13px;
 }
+
+.auth-wrap .form-card .field label { font-size: 15px; }
+.auth-wrap .form-card .field input { min-height: 48px; font-size: 16px; }
+.auth-wrap .form-card .btn { min-height: 48px; font-size: 16px; }
+.auth-wrap:not(.wide) .form-card > .btn-primary { width: 100%; }
+.auth-approval-note { color: var(--muted); font-size: 15px; line-height: 1.7; margin: 20px 0 0; }
+.auth-wrap .form-card > .auth-approval-note { margin-bottom: 24px; }

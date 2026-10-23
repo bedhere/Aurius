@@ -1218,3 +1218,37 @@ table.data-table {
     align-items: flex-start;
   }
 }
+
+/* Public navigation: clear account routes and a prominent partnership enquiry. */
+.pdf-header .site-header__top { height: 144px; padding: 0 clamp(24px, 3.5vw, 70px); gap: clamp(16px, 1.6vw, 30px); }
+.pdf-header .brand { width: auto; flex: 0 0 auto; margin-left: 0; padding-top: 30px; }
+.pdf-header .brand__wordmark { width: clamp(165px, 13vw, 235px); }
+.pdf-header .main-nav { gap: clamp(10px, 1.1vw, 22px); min-width: 0; }
+.pdf-header .main-nav a { font-size: clamp(11px, .8vw, 15px); font-weight: 500; letter-spacing: .3px; white-space: nowrap; }
+.pdf-header .nav-partner-mobile { display: none; }
+.pdf-header__actions { gap: 16px; flex-shrink: 0; }
+.pdf-header .pdf-header__partner { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 12px 16px; border-radius: var(--radius-sm); background: var(--brand); color: #fff; font-size: 13px; line-height: 1.3; font-weight: 700; letter-spacing: .4px; white-space: nowrap; }
+.pdf-header .pdf-header__partner:hover { background: var(--brand-dark); }
+.pdf-header a:focus-visible, .pdf-header button:focus-visible { outline: 3px solid var(--brand-light); outline-offset: 4px; }
+
+@media (max-width: 1280px) {
+  .pdf-header .site-header__top { height: 108px; padding: 20px 28px; gap: 22px; }
+  .pdf-header .brand { padding-top: 0; margin: 0 auto 0 0; align-self: center; }
+  .pdf-header .brand__wordmark { width: 180px; }
+  .pdf-header .nav-toggle { display: block; order: 3; width: auto; min-width: 64px; margin: 0; }
+  .pdf-header .main-nav { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; padding: 16px 28px 24px; flex-direction: column; align-items: stretch; gap: 0; background: #fff; border-bottom: 1px solid var(--stone-200); box-shadow: var(--shadow); }
+  .pdf-header .main-nav.open { display: flex; }
+  .pdf-header .main-nav a { padding: 14px 0; font-size: 14px; white-space: normal; }
+  .pdf-header .nav-partner-mobile { display: block; color: var(--brand); font-weight: 700; }
+  .pdf-header__actions { display: flex; gap: 16px; }
+}
+@media (max-width: 620px) {
+  .pdf-header .site-header__top { height: auto; min-height: 130px; padding: 20px; display: grid; grid-template-columns: 1fr auto; gap: 16px; }
+  .pdf-header .brand { grid-column: 1; margin: 0; }
+  .pdf-header .brand__wordmark { width: 155px; }
+  .pdf-header .nav-toggle { grid-column: 2; grid-row: 1; }
+  .pdf-header__actions { grid-column: 1 / -1; justify-content: space-between; }
+  .pdf-header .pdf-header__partner { min-height: 44px; padding: 12px 18px; font-size: 12px; }
+  .pdf-header__actions .pdf-header__icon { display: none; }
+  .pdf-header .main-nav { padding-inline: 20px; }
+}

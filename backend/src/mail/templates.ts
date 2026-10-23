@@ -44,10 +44,32 @@ export interface MailTemplateData {
 
 type TemplateFn = (data: MailTemplateData) => { subject: string; text: string; html: string };
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]!));
+}
+
+function enquiryTemplate(title: string, fields: [string, string][]): TemplateFn {
+  return (data) => ({
+    subject: `${title} — AURIUS Website`,
+    text: fields.map(([label, key]) => `${label}: ${data[key] || 'Not provided'}`).join('\n\n'),
+    html: layout(title, fields.map(([label, key]) => kv(label, escapeHtml(String(data[key] || 'Not provided')).replace(/\n/g, '<br>'))).join('')),
+  });
+}
+
 const money = (v: unknown): string =>
   typeof v === 'number' ? `AUD ${v.toFixed(2)}` : String(v ?? '-');
 
 export const templates: Record<string, TemplateFn> = {
+  CONTACT_ENQUIRY: enquiryTemplate('New Customer Enquiry', [
+    ['Full Name', 'name'], ['Company Name', 'companyName'], ['Email Address', 'email'],
+    ['Phone Number', 'phone'], ['State / Territory', 'state'], ['Enquiry Type', 'enquiryType'], ['Message', 'message'],
+  ]),
+  PARTNERSHIP_ENQUIRY: enquiryTemplate('New Partnership Enquiry', [
+    ['Company Name', 'companyName'], ['State / Territory', 'state'], ['City', 'city'],
+    ['Current Product Categories & Business Overview', 'businessOverview'], ['Products of Interest', 'interestedProducts'],
+    ['Preferred Trading Territory', 'intendedTerritory'], ['Estimated Annual Sales Volume', 'expectedAnnualSales'],
+    ['Contact Name', 'contactName'], ['Mobile Number', 'phone'], ['Company Website', 'website'], ['Company Email', 'email'],
+  ]),
   REGISTRATION_SUBMITTED: (d) => ({
     subject: 'Your AURIUS application has been received',
     text: `Hi ${d.firstName},\n\nThank you for submitting your ${d.channel} application to AURIUS (${d.applicationNo}).\nOur team will review your qualifications shortly.\n\nYou can track the status in your account.\n\nAURIUS Team`,

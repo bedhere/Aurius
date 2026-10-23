@@ -17,20 +17,21 @@ export default function Header() {
         <Link to="/" className="brand" onClick={close}>
           <img src="/brand/aurius-logo.svg" alt="AURIUS — Smart Toilet | Whole House Water Filtration" className="brand__wordmark" />
         </Link>
-        <button className="nav-toggle" onClick={() => setOpen(!open)} aria-label={t('nav.menu')}>
-          {t('nav.menu')}
+        <button className="nav-toggle" type="button" onClick={() => setOpen(!open)} aria-label={t('nav.menu')} aria-expanded={open} aria-controls="main-navigation">
+          {open ? t('Close') : t('nav.menu')}
         </button>
-        <nav className={`main-nav ${open ? 'open' : ''}`}>
-          <NavLink to="/vision" className={navItem} onClick={close}>{t('nav.vision')}</NavLink>
-          <NavLink to="/products" className={navItem} onClick={close}>{t('nav.products')}</NavLink>
-          <NavLink to="/stockists" className={navItem} onClick={close}>{t('nav.stockists')}</NavLink>
-          <NavLink to="/vip" className={({ isActive }) => `${navItem({ isActive })} nav-vip`} onClick={close}>VIP</NavLink>
-          <NavLink to="/trade" className={navItem} onClick={close}>{t('nav.trade')}</NavLink>
-          <NavLink to="/support" className={navItem} onClick={close}>{t('nav.support')}</NavLink>
-          <NavLink to="/contact" className={navItem} onClick={close}>{t('nav.contact')}</NavLink>
+        <nav id="main-navigation" aria-label={t('Main navigation')} className={`main-nav ${open ? 'open' : ''}`} onKeyDown={(event) => { if (event.key === 'Escape') close(); }}>
+          <NavLink to="/vision" className={navItem} onClick={close}>VISION</NavLink>
+          <NavLink to="/products" className={navItem} onClick={close}>PRODUCTS</NavLink>
+          <NavLink to="/stockists" className={navItem} onClick={close}>STOCKISTS</NavLink>
+          <NavLink to="/plumbers-builders" className={navItem} onClick={close}>PLUMBERS &amp; BUILDERS</NavLink>
+          <NavLink to="/trade" className={navItem} onClick={close}>TRADE</NavLink>
+          <NavLink to="/support" className={navItem} onClick={close}>SUPPORT</NavLink>
+          <NavLink to="/contact" className={navItem} onClick={close}>CONTACT</NavLink>
+          <NavLink to="/become-a-partner" className="nav-partner-mobile" onClick={close}>BECOME A PARTNER</NavLink>
         </nav>
         <div className="pdf-header__actions">
-          <Link to="/trade" className="pdf-header__partner" onClick={close}>Become Partner</Link>
+          <Link to="/become-a-partner" className="pdf-header__partner" onClick={close}>BECOME A PARTNER</Link>
           <button
             className="language-toggle"
             type="button"

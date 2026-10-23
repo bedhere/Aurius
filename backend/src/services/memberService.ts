@@ -31,11 +31,11 @@ export function roleDisplayName(role: UserRole): string {
 }
 
 export function channelForRole(role: UserRole): 'VIP' | 'TRADE' {
-  return role === 'LICENSED_TRADESMAN' ? 'VIP' : 'TRADE';
+  return ['LICENSED_TRADESMAN', 'WATERWORKER', 'BUILDER'].includes(role) ? 'VIP' : 'TRADE';
 }
 
 function loginUrlFor(role: UserRole): string {
-  return role === 'LICENSED_TRADESMAN' ? `${config.frontendUrl}/vip` : `${config.frontendUrl}/trade`;
+  return `${config.frontendUrl}${channelForRole(role) === 'VIP' ? '/plumbers-builders' : '/trade'}`;
 }
 
 // ---------------------------------------------------------------------------

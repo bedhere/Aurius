@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from 'react';
+import { translateInterface } from './interfaceCopy';
 
 export type AppLanguage = 'en' | 'zh-CN';
 export const LANGUAGE_STORAGE_KEY = 'aurius.language';
@@ -12,18 +13,18 @@ const messages: Record<AppLanguage, Record<string, string>> = {
     'header.search': 'Search products', 'header.cart': 'Shopping bag',
     'language.toggle': 'Switch to Chinese', 'language.current': 'EN',
     'common.loading': 'Loading...', 'common.retry': 'Retry', 'common.backProducts': 'Back to Products',
-    'common.more': 'More', 'common.model': 'Model', 'common.inStock': 'In stock', 'common.units': 'units',
+    'common.more': 'View Details', 'common.model': 'Model', 'common.inStock': 'In stock', 'common.units': 'units',
     'common.outOfStock': 'Out of stock', 'common.available': 'available', 'common.unavailable': 'Unavailable',
     'common.search': 'Search products...', 'common.noProducts': 'No products found.',
-    'products.title': 'PRODUCTS', 'products.sub': 'Smart Toilets | Smart Toilet Seats | Whole-House Water Filtration | Filter Cartridges | Custom Floor Drains',
-    'products.all': 'All', 'products.smartToilet': 'Smart Toilet', 'products.toiletLid': 'Smart Toilet Seat',
+    'products.title': 'Explore the AURIUS Collection', 'products.sub': 'Discover thoughtfully designed smart bathroom solutions and whole-house water filtration systems, combining refined aesthetics, intelligent functionality and everyday comfort.',
+    'products.all': 'All', 'products.smartToilet': 'Smart Toilets', 'products.toiletLid': 'Smart Toilet Seats',
     'products.group.water': 'Water Filtration', 'products.group.bathroom': 'Smart Toilets & Smart Toilet Seats',
     'products.group.drain': 'Floor Drains', 'products.group.other': 'Other Products',
-    'products.water': 'Whole-House Water Purification', 'products.filter': 'Filter Cartridge', 'products.shower': 'Shower Filtration', 'products.drain': 'Engineering Custom Floor Drain',
+    'products.water': 'Whole House Water Filtration', 'products.filter': 'Filter Cartridges', 'products.shower': 'Shower Filtration', 'products.drain': 'Custom Floor Drains',
     'products.error': 'We could not load the product catalogue. Please check the connection and try again.',
     'products.loadFailed': 'Product catalogue unavailable',
-    'vision.title': 'OUR VISION', 'vision.sub': 'Elevating Everyday Living Through Intelligent Water Technology.',
-    'vision.standFor': 'WHAT WE STAND FOR', 'vision.trades': 'Join Our Trade Network', 'vision.dealer': 'Become a Regional Distributor',
+    'vision.title': 'Our Vision', 'vision.sub': 'To bring refined design, intelligent comfort and dependable water solutions into homes across Australia.',
+    'vision.standFor': 'WHAT WE STAND FOR', 'vision.trades': 'Plumbers & Builders Portal', 'vision.dealer': 'Become an AURIUS Partner',
     'vision.valuesSubtitle': 'Quality. Innovation. Partnership. Long-Term Value.',
     'stockists.title': 'STOCKISTS', 'stockists.sub': 'Choose a region to explore local AURIUS stockists and partnership opportunities.',
     'stockists.viewState': 'Explore this region', 'stockists.localNetwork': 'Local stockist network',
@@ -39,7 +40,7 @@ const messages: Record<AppLanguage, Record<string, string>> = {
     'stockists.state.NSW': 'New South Wales', 'stockists.state.VIC': 'Victoria', 'stockists.state.QLD': 'Queensland',
     'stockists.state.WA': 'Western Australia', 'stockists.state.SA': 'South Australia', 'stockists.state.TAS': 'Tasmania',
     'stockists.state.ACT': 'Australian Capital Territory (Canberra)', 'stockists.state.NT': 'Northern Territory', 'stockists.state.other': 'Other regions',
-    'support.title': 'SUPPORT', 'support.sub': 'Manuals, warranty, installation and after-sales assistance.', 'support.faq': 'Frequently Asked Questions', 'support.contact': 'Contact Support',
+    'support.title': 'Support', 'support.sub': 'Product information, installation guidance, warranty support and after-sales assistance.', 'support.faq': 'Frequently Asked Questions', 'support.contact': 'Contact Support',
     'contact.title': 'CONTACT', 'contact.sub': 'We are here to help with products, orders and partnership enquiries.', 'contact.getInTouch': 'Get in touch', 'contact.send': 'Send a message',
     'contact.name': 'Name', 'contact.email': 'Email', 'contact.phone': 'Phone', 'contact.address': 'Address', 'contact.hours': 'Hours', 'contact.message': 'Message',
     'contact.sendMessage': 'Send Message', 'contact.sending': 'Sending...', 'contact.success': 'Thank you for contacting AURIUS. Our team will get back to you shortly.',
@@ -58,7 +59,7 @@ const messages: Record<AppLanguage, Record<string, string>> = {
     'drain.finish.matteBlack': 'Matte black', 'drain.finish.graphite': 'Graphite', 'drain.finish.gunmetal': 'Gunmetal',
     'drain.finish.brushedBrass': 'Brushed brass', 'drain.finish.gold': 'Gold', 'drain.finish.roseGold': 'Rose gold',
     'drain.finish.matteWhite': 'Matte white',
-    'footer.quality': 'Australian quality and WaterMark certification', 'footer.rights': '© 2026 AURIUS Australia Pty Ltd. All rights reserved.',
+    'footer.quality': 'AURIUS product quality and certification information', 'footer.rights': '© 2026 AURIUS Australia Pty Ltd. All rights reserved.',
     'footer.privacy': 'Privacy Policy', 'footer.terms': 'Terms of Service', 'footer.dealer': 'Dealer Agreement',
   },
   'zh-CN': {
@@ -72,14 +73,14 @@ const messages: Record<AppLanguage, Record<string, string>> = {
     'common.more': '查看详情', 'common.model': '型号', 'common.inStock': '有库存', 'common.units': '件',
     'common.outOfStock': '暂时缺货', 'common.available': '可购买', 'common.unavailable': '暂不可用',
     'common.search': '搜索产品...', 'common.noProducts': '没有找到产品。',
-    'products.title': '产品', 'products.sub': '智能马桶 | 智能马桶盖 | 全屋净水 | 滤芯 | 工程定制地漏',
+    'products.title': '探索 AURIUS 产品系列', 'products.sub': '探索精心设计的智能卫浴与全屋净水系统，融合精致美学、智能功能与日常舒适体验。',
     'products.all': '全部', 'products.smartToilet': '智能马桶', 'products.toiletLid': '智能马桶盖',
     'products.group.water': '净水产品', 'products.group.bathroom': '智能马桶及马桶盖',
     'products.group.drain': '地漏产品', 'products.group.other': '其他产品',
     'products.water': '全屋净水', 'products.filter': '滤芯', 'products.shower': '淋浴净水', 'products.drain': '工程定制地漏',
     'products.error': '产品目录加载失败，请检查网络连接后重试。', 'products.loadFailed': '产品目录暂时不可用',
-    'vision.title': '品牌愿景', 'vision.sub': '以智能水科技，提升每一天的生活品质。',
-    'vision.standFor': '我们的坚持', 'vision.trades': '加入专业合作网络', 'vision.dealer': '申请成为区域一级代理',
+    'vision.title': '品牌愿景', 'vision.sub': '为澳大利亚家庭带来精致设计、智能舒适体验与可靠的用水解决方案。',
+    'vision.standFor': '我们的坚持', 'vision.trades': '水工与建筑商采购入口', 'vision.dealer': '申请成为 AURIUS 合作伙伴',
     'vision.valuesSubtitle': '品质、创新、合作与长期价值。',
     'stockists.title': '经销网点', 'stockists.sub': '请选择所在地区，查看当地 AURIUS 合作伙伴及合作机会。',
     'stockists.viewState': '查看本地区信息', 'stockists.localNetwork': '本地区合作网点',
@@ -95,7 +96,7 @@ const messages: Record<AppLanguage, Record<string, string>> = {
     'stockists.state.NSW': '新南威尔士州', 'stockists.state.VIC': '维多利亚州', 'stockists.state.QLD': '昆士兰州',
     'stockists.state.WA': '西澳大利亚州', 'stockists.state.SA': '南澳大利亚州', 'stockists.state.TAS': '塔斯马尼亚州',
     'stockists.state.ACT': '澳大利亚首都领地（堪培拉）', 'stockists.state.NT': '北领地', 'stockists.state.other': '其他区域',
-    'support.title': '支持', 'support.sub': '产品手册、质保、安装与售后服务。', 'support.faq': '常见问题', 'support.contact': '联系支持团队',
+    'support.title': '支持', 'support.sub': '提供产品信息、安装指导、质保支持及售后服务。', 'support.faq': '常见问题', 'support.contact': '联系支持团队',
     'contact.title': '联系我们', 'contact.sub': '产品、订单或合作事宜，我们都很乐意为您提供帮助。', 'contact.getInTouch': '联系方式', 'contact.send': '发送消息',
     'contact.name': '姓名', 'contact.email': '邮箱', 'contact.phone': '电话', 'contact.address': '地址', 'contact.hours': '工作时间', 'contact.message': '留言',
     'contact.sendMessage': '发送消息', 'contact.sending': '发送中...', 'contact.success': '感谢您联系 AURIUS，我们的团队会尽快回复。',
@@ -147,7 +148,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const value = useMemo<LanguageContextValue>(() => ({
     language,
     setLanguage,
-    t: (key) => messages[language][key] ?? messages.en[key] ?? key,
+    t: (key) => messages[language][key] ?? translateInterface(messages.en[key] ?? key, language),
   }), [language]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

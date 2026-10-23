@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { api, getAccessToken } from '../../api/client';
 import { DownloadItem } from '../../api/types';
@@ -16,6 +17,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function Downloads() {
+  const { t } = useI18n();
   const [files, setFiles] = useState<DownloadItem[] | null>(null);
 
   useEffect(() => {
@@ -46,21 +48,21 @@ export default function Downloads() {
 
   return (
     <>
-      <h2>Downloads</h2>
-      <p className="muted small">Internal documents — for authorised AURIUS partners only.</p>
+      <h2>{t("Downloads")}</h2>
+      <p className="muted small">{t("Internal documents — for authorised AURIUS partners only.")}</p>
       {Object.keys(grouped).length === 0 ? (
-        <p className="muted">No documents available for your membership level.</p>
+        <p className="muted">{t("No documents available for your membership level.")}</p>
       ) : (
         Object.entries(grouped).map(([cat, items]) => (
           <div className="panel" key={cat}>
-            <h3>{cat}</h3>
+            <h3>{t(cat)}</h3>
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Title</th>
-                    <th>Size</th>
-                    <th>Added</th>
+                    <th>{t("Title")}</th>
+                    <th>{t("Size")}</th>
+                    <th>{t('Added')}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -75,7 +77,7 @@ export default function Downloads() {
                       <td>{fmtDate(f.createdAt)}</td>
                       <td>
                         <button className="btn btn-primary btn-sm" onClick={() => download(f)}>
-                          Download
+                          {t("Download")}
                         </button>
                       </td>
                     </tr>

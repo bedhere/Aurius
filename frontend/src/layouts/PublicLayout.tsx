@@ -9,7 +9,7 @@ export default function PublicLayout() {
   useEffect(() => {
     window.scrollTo(0, 0);
     // Sensitive pages must not be indexed (requirement 33)
-    const sensitive = ['/vip', '/trade', '/member', '/admin', '/login', '/forgot-password', '/reset-password'];
+    const sensitive = ['/vip', '/plumbers-builders', '/trade', '/member', '/admin', '/login', '/forgot-password', '/reset-password'];
     const el = document.querySelector('meta[name="robots"]');
     if (sensitive.some((p) => pathname.startsWith(p))) {
       if (el) el.setAttribute('content', 'noindex, nofollow');

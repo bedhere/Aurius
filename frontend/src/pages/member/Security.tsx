@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
@@ -6,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import '../../assets/styles/pages-member.css';
 
 export default function Security() {
+  const { t } = useI18n();
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [currentPassword, setCurrent] = useState('');
@@ -42,43 +44,42 @@ export default function Security() {
 
   return (
     <>
-      <h2>Security</h2>
-      {message && <Alert type={message.type}>{message.text}</Alert>}
+      <h2>{t("Security")}</h2>
+      {message && <Alert type={message.type}>{t(message.text)}</Alert>}
 
       <form className="panel" onSubmit={change}>
-        <h3>Change Password</h3>
+        <h3>{t("Change Password")}</h3>
         <div className="field">
-          <label>Current Password</label>
+          <label>{t("Current Password")}</label>
           <input type="password" value={currentPassword} onChange={(e) => setCurrent(e.target.value)} required />
         </div>
         <div className="form-grid-2">
           <div className="field">
-            <label>New Password</label>
+            <label>{t("New Password")}</label>
             <input type="password" value={newPassword} onChange={(e) => setNew(e.target.value)} required />
           </div>
           <div className="field">
-            <label>Confirm New Password</label>
+            <label>{t("Confirm New Password")}</label>
             <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
           </div>
         </div>
         <div className="hint mb-2">
-          Password must be at least 8 characters and include uppercase, lowercase, a number and a special
-          character.
+          {t("Password must be at least 8 characters and include uppercase, lowercase, a number and a special character.")}
         </div>
         <button className="btn btn-primary" type="submit" disabled={busy}>
-          {busy ? 'Saving…' : 'Update Password'}
+          {busy ? t("Saving…") : t("Update Password")}
         </button>
       </form>
 
       <div className="panel">
-        <h3>Account Security</h3>
+        <h3>{t("Account Security")}</h3>
         <ul>
-          <li>Sensitive data (ABN, licence numbers, phone) is encrypted at rest with AES-256.</li>
-          <li>Passwords are stored as one-way cryptographic hashes.</li>
-          <li>Your session expires automatically for your protection.</li>
+          <li>{t("Sensitive data (ABN, licence numbers, phone) is encrypted at rest with AES-256.")}</li>
+          <li>{t("Passwords are stored as one-way cryptographic hashes.")}</li>
+          <li>{t("Your session expires automatically for your protection.")}</li>
         </ul>
         <button className="btn btn-danger" onClick={doLogout}>
-          Log Out
+          {t("Log Out")}
         </button>
       </div>
     </>

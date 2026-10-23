@@ -3,7 +3,7 @@ import { prisma } from '../lib/prisma';
 import { ok, badRequest, forbidden, notFound, created } from '../lib/response';
 import { validated } from '../middleware/validate';
 import { hashPassword } from '../services/passwordService';
-import { generateApplicationNumber } from '../services/sequenceService';
+import { generateApplicationNumber, roleToPriceLevel } from '../services/sequenceService';
 import { audit } from '../services/auditService';
 import { sendMail } from '../services/mailService';
 import { verifyRecaptcha } from '../services/recaptchaService';
@@ -35,7 +35,7 @@ export async function submitApplication(req: Request, res: Response, next: NextF
 
     const role: UserRole =
       body.channel === 'VIP'
-        ? UserRole.LICENSED_TRADESMAN
+        ? body.tradeType === 'BUILDER' ? UserRole.BUILDER : UserRole.LICENSED_TRADESMAN
         : body.channel === 'TRADE' && body.licenceType
           ? UserRole.LICENSED_TRADESMAN // trade applicant claiming a licence is still reviewed by admin
           : UserRole.SUB_DEALER;
@@ -55,7 +55,7 @@ export async function submitApplication(req: Request, res: Response, next: NextF
           passwordHash,
           accountStatus: AccountStatus.PENDING_REVIEW,
           role,
-          memberLevel: role === 'SUB_DEALER' ? 3 : 2,
+          memberLevel: roleToPriceLevel(role),
         },
       });
       const app = await tx.partnerApplication.create({

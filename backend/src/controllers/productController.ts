@@ -21,6 +21,8 @@ function categoriesForFilter(filter?: string): string[] | undefined {
       return ['Whole-House Water Purification', 'Filter Cartridge', 'Shower Filtration'];
     case 'drain':
       return ['Engineering Custom Floor Drain'];
+    case 'filter':
+      return ['Filter Cartridge'];
     default:
       return [filter];
   }

@@ -4,7 +4,7 @@ import { emailSchema } from './auth.schema';
 export const AU_STATES = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'] as const;
 export const COUNTRIES = ['Australia', 'New Zealand', 'Fiji', 'Other'] as const;
 
-export const tradeTypeSchema = z.enum(['LICENSED_PLUMPER', 'LICENSED_ELECTRICIAN', 'NOT_APPLICABLE']);
+export const tradeTypeSchema = z.enum(['LICENSED_PLUMPER', 'LICENSED_ELECTRICIAN', 'BUILDER', 'NOT_APPLICABLE']);
 
 const applicationObject = z.object({
   channel: z.enum(['VIP', 'TRADE']),
@@ -65,15 +65,15 @@ export const applicationSchema = applicationObject
     // VIP channel (licensed plumber / electrician) has stricter requirements
     if (d.channel === 'VIP') {
       if (d.tradeType === 'NOT_APPLICABLE') {
-        ctx.addIssue({ code: 'custom', path: ['tradeType'], message: 'Please select Licensed Plumber or Licensed Electrician' });
+        ctx.addIssue({ code: 'custom', path: ['tradeType'], message: 'Please select Plumber, Builder or an approved trade profession' });
       }
       if (!d.licenceNumber) {
         ctx.addIssue({ code: 'custom', path: ['licenceNumber'], message: 'Licence number is required' });
       }
-      if (!d.smartToiletExp) {
+      if (d.tradeType !== 'BUILDER' && !d.smartToiletExp) {
         ctx.addIssue({ code: 'custom', path: ['smartToiletExp'], message: 'Smart Toilet installation experience is required' });
       }
-      if (!d.waterPurifExp) {
+      if (d.tradeType !== 'BUILDER' && !d.waterPurifExp) {
         ctx.addIssue({ code: 'custom', path: ['waterPurifExp'], message: 'Water purification installation experience is required' });
       }
     }

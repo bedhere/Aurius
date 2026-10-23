@@ -127,10 +127,10 @@ async function seed(): Promise<void> {
         key: 'COMPANY_CONTACT',
         category: 'GENERAL',
         value: JSON.stringify({
-          phone: '+61 2 8000 0000',
+          phone: '',
           email: 'info@aurius.com.au',
-          address: 'Unit 8, 12-14 Orchard Road, Sydney NSW 2000, Australia',
-          hours: 'Mon-Fri 9:00am - 5:00pm AEST',
+          address: '',
+          hours: '',
         }),
       },
     ],

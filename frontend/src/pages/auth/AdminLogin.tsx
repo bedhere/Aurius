@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiError } from '../../api/client';
@@ -6,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import '../../assets/styles/pages-auth.css';
 
 export default function AdminLogin() {
+  const { t } = useI18n();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -32,23 +34,23 @@ export default function AdminLogin() {
     <section className="section">
       <div className="auth-wrap">
         <div className="center mb-2">
-          <h2 className="section-title">AURIUS Admin Console</h2>
+          <h2 className="section-title">{t("AURIUS Admin Console")}</h2>
         </div>
         <form className="form-card" onSubmit={submit}>
           {error && <Alert type="error">{error}</Alert>}
           <div className="field">
-            <label>Email Address</label>
+            <label>{t("Email Address")}</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="field">
-            <label>Password</label>
+            <label>{t("Password")}</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
           <button className="btn btn-primary" type="submit" disabled={busy}>
-            {busy ? 'Logging in…' : 'Log In'}
+            {busy ? t("Logging in…") : t("Log In")}
           </button>
           <div className="mt-2 small">
-            <Link to="/">← Back to website</Link>
+            <Link to="/">{t("← Back to website")}</Link>
           </div>
         </form>
       </div>

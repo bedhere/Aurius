@@ -13,6 +13,7 @@ const GuestCheckout = lazy(() => import('./pages/public/GuestCheckout'));
 const Stockists = lazy(() => import('./pages/public/Stockists'));
 const Support = lazy(() => import('./pages/public/Support'));
 const Contact = lazy(() => import('./pages/public/Contact'));
+const BecomePartner = lazy(() => import('./pages/public/BecomePartner'));
 const PrivacyPolicy = lazy(() => import('./pages/public/PrivacyPolicy'));
 const Terms = lazy(() => import('./pages/public/Terms'));
 const DealerAgreement = lazy(() => import('./pages/public/DealerAgreement'));
@@ -66,11 +67,15 @@ export default function App() {
             <Route path="/stockists/:state" element={<Stockists />} />
             <Route path="/support" element={<Support />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/become-a-partner" element={<BecomePartner />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/dealer-agreement" element={<DealerAgreement />} />
             <Route path="/vip" element={<Portal channel="VIP" />} />
+            <Route path="/plumbers-builders" element={<Portal channel="VIP" />} />
+            <Route path="/plumbers-builders/apply" element={<Portal channel="VIP" application />} />
             <Route path="/trade" element={<Portal channel="TRADE" />} />
+            <Route path="/trade/apply" element={<Portal channel="TRADE" application />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/admin-login" element={<AdminLogin />} />

@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma';
 import { AccountStatus, UserRole } from '@prisma/client';
 import { roleToPriceLevel } from './sequenceService';
 import { logSecurityEvent, checkPriceBurst } from './securityService';
+import { config } from '../config';
 
 // ---------------------------------------------------------------------------
 // Price access control. Public retail/promotion prices may be shown together;
@@ -38,6 +39,7 @@ export interface VisibleProductPrices {
 }
 
 export function visiblePriceKeyForRole(role: UserRole | null | undefined): VisiblePriceKey {
+  if (config.tradePricingMode === 'uniform' && role && roleToPriceLevel(role)) return 'level2Price';
   switch (role) {
     case 'REGIONAL_AGENT':
       return 'dealer1Price';
@@ -63,6 +65,10 @@ function memberPriceForRole(row: {
   level2Price: number;
   level3Price: number;
 }, role: UserRole | null | undefined): { value: number | null; label: string; level: number } {
+  const level = role ? roleToPriceLevel(role) : 0;
+  if (config.tradePricingMode === 'uniform' && level) {
+    return { value: row.level2Price, label: 'Trade price', level };
+  }
   switch (role) {
     case 'REGIONAL_AGENT':
       return { value: row.dealer1Price ?? row.level1Price, label: 'Dealer price', level: 1 };
@@ -125,7 +131,7 @@ export async function getPriceForProduct(
     await checkPriceBurst(requesterUserId);
   }
 
-  const price =
+  const price = config.tradePricingMode === 'uniform' ? priceRow.level2Price :
     vis.level === 1 ? (priceRow.dealer1Price ?? priceRow.level1Price) :
     vis.level === 2 ? priceRow.level2Price :
     vis.level === 3 ? (priceRow.distributor2Price ?? priceRow.level3Price) :
@@ -138,7 +144,7 @@ export async function getPriceForProduct(
 export async function getUnitPriceForLevel(productId: number, level: number): Promise<number> {
   const priceRow = await prisma.productPrice.findUnique({ where: { productId } });
   if (!priceRow) throw new Error('No price configured for product');
-  const price =
+  const price = config.tradePricingMode === 'uniform' ? priceRow.level2Price :
     level === 1 ? (priceRow.dealer1Price ?? priceRow.level1Price) :
     level === 2 ? priceRow.level2Price :
     level === 3 ? (priceRow.distributor2Price ?? priceRow.level3Price) :

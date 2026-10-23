@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { Alert, Spinner } from '../../components/ui';
@@ -20,6 +21,7 @@ interface Address {
 const empty = { label: '', contactName: '', phone: '', street: '', suburb: '', state: '', postcode: '', country: 'Australia' };
 
 export default function Addresses() {
+  const { t } = useI18n();
   const [list, setList] = useState<Address[] | null>(null);
   const [form, setForm] = useState(empty);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -45,20 +47,20 @@ export default function Addresses() {
   };
 
   const remove = async (id: number) => {
-    if (!window.confirm('Remove this address?')) return;
+    if (!window.confirm(t('Remove this address?'))) return;
     await api.delete(`/api/addresses/${id}`);
     load();
   };
 
   return (
     <>
-      <h2>Shipping Addresses</h2>
-      {message && <Alert type={message.type}>{message.text}</Alert>}
+      <h2>{t("Shipping Addresses")}</h2>
+      {message && <Alert type={message.type}>{t(message.text)}</Alert>}
 
       {list === null ? (
         <Spinner />
       ) : list.length === 0 ? (
-        <p className="muted">No saved addresses.</p>
+        <p className="muted">{t("No saved addresses.")}</p>
       ) : (
         <div className="card-grid" style={{ marginBottom: 24 }}>
           {list.map((a) => (
@@ -68,7 +70,7 @@ export default function Addresses() {
                   <h3 className="card__title" style={{ margin: 0 }}>
                     {a.label}
                   </h3>
-                  {a.isDefault && <span className="badge badge-teal">Default</span>}
+                  {a.isDefault && <span className="badge badge-teal">{t("Default")}</span>}
                 </div>
                 <p className="small" style={{ margin: 0 }}>
                   {a.contactName}
@@ -79,7 +81,7 @@ export default function Addresses() {
                 </p>
                 <div>
                   <button className="btn btn-danger btn-sm" onClick={() => remove(a.id)}>
-                    Remove
+                    {t("Remove")}
                   </button>
                 </div>
               </div>
@@ -89,50 +91,50 @@ export default function Addresses() {
       )}
 
       <form className="panel" onSubmit={add}>
-        <h3>Add Address</h3>
+        <h3>{t("Add Address")}</h3>
         <div className="form-grid-2">
           <div className="field">
-            <label>Label</label>
-            <input type="text" placeholder="e.g. Warehouse" value={form.label} onChange={set('label')} />
+            <label>{t("Label")}</label>
+            <input type="text" placeholder={t("e.g. Warehouse")} value={form.label} onChange={set('label')} />
           </div>
           <div className="field">
-            <label>Contact Name</label>
+            <label>{t("Contact Name")}</label>
             <input type="text" value={form.contactName} onChange={set('contactName')} required />
           </div>
           <div className="field">
-            <label>Phone</label>
+            <label>{t("Phone")}</label>
             <input type="tel" value={form.phone} onChange={set('phone')} required />
           </div>
           <div className="field">
-            <label>Street</label>
+            <label>{t("Street")}</label>
             <input type="text" value={form.street} onChange={set('street')} required />
           </div>
           <div className="field">
-            <label>Suburb</label>
+            <label>{t("Suburb")}</label>
             <input type="text" value={form.suburb} onChange={set('suburb')} required />
           </div>
           <div className="field">
-            <label>State</label>
+            <label>{t("State")}</label>
             <select value={form.state} onChange={set('state')} required>
-              <option value="">Select…</option>
+              <option value="">{t("Select…")}</option>
               {AU_STATES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(`stockists.state.${s}`)} ({s})
                 </option>
               ))}
             </select>
           </div>
           <div className="field">
-            <label>Postcode</label>
+            <label>{t("Postcode")}</label>
             <input type="text" value={form.postcode} onChange={set('postcode')} required />
           </div>
           <div className="field">
-            <label>Country</label>
+            <label>{t("Country")}</label>
             <input type="text" value={form.country} onChange={set('country')} />
           </div>
         </div>
         <button className="btn btn-primary" type="submit">
-          Save Address
+          {t("Save Address")}
         </button>
       </form>
     </>

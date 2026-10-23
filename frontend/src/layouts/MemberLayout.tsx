@@ -1,3 +1,4 @@
+import { useI18n } from '../i18n/LanguageContext';
 import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PageLoading } from '../components/ui';
@@ -5,6 +6,7 @@ import { PageLoading } from '../components/ui';
 // Member centre shell (requirement 48): Dashboard / My Profile / My Orders /
 // My Performance / Downloads / Shipping Addresses / Security / Logout.
 export default function MemberLayout() {
+  const { t, language, setLanguage } = useI18n();
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -23,37 +25,38 @@ export default function MemberLayout() {
       <aside className="member-side">
         <div className="member-side__head">
           <strong>AURIUS</strong>
-          <span className="small muted">Member Centre</span>
+          <span className="small muted">{t("Member Centre")}</span>
         </div>
         <nav>
           <NavLink to="/member" end className={item}>
-            Dashboard
+            {t("Dashboard")}
           </NavLink>
           <NavLink to="/member/profile" className={item}>
-            My Profile
+            {t("My Profile")}
           </NavLink>
           <NavLink to="/member/orders" className={item}>
-            My Orders
+            {t("My Orders")}
           </NavLink>
           <NavLink to="/member/cart" className={item}>
-            My Cart
+            {t("My Cart")}
           </NavLink>
           <NavLink to="/member/performance" className={item}>
-            My Performance
+            {t("My Performance")}
           </NavLink>
           <NavLink to="/member/downloads" className={item}>
-            Downloads
+            {t("Downloads")}
           </NavLink>
           <NavLink to="/member/addresses" className={item}>
-            Shipping Addresses
+            {t("Shipping Addresses")}
           </NavLink>
           <NavLink to="/member/security" className={item}>
-            Security
+            {t("Security")}
           </NavLink>
         </nav>
         <div className="member-side__foot">
-          <Link to="/" className="btn btn-ghost btn-sm">Back to website</Link>
-          <button className="btn btn-ghost btn-sm" onClick={handleLogout}>Log out</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setLanguage(language === 'en' ? 'zh-CN' : 'en')} aria-label={t('language.toggle')}>{t('language.current')}</button>
+          <Link to="/" className="btn btn-ghost btn-sm">{t("Back to website")}</Link>
+          <button className="btn btn-ghost btn-sm" onClick={handleLogout}>{t("Log out")}</button>
         </div>
       </aside>
       <section className="member-main">

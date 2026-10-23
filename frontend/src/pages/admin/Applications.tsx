@@ -103,7 +103,7 @@ export default function Applications() {
       if (!info) return;
       body = { action, requestedInfo: info };
     } else if (action === 'APPROVE') {
-      const role = window.prompt('Approve role (REGIONAL_AGENT / LICENSED_TRADESMAN / SUB_DEALER)', selected.partnershipType === 'REGIONAL_DISTRIBUTOR' ? 'REGIONAL_AGENT' : selected.channel === 'VIP' ? 'LICENSED_TRADESMAN' : 'SUB_DEALER');
+      const role = window.prompt('Approve role (REGIONAL_AGENT / LICENSED_TRADESMAN / SUB_DEALER / WATERWORKER / BUILDER)', selected.partnershipType === 'REGIONAL_DISTRIBUTOR' ? 'REGIONAL_AGENT' : selected.tradeType === 'BUILDER' ? 'BUILDER' : selected.channel === 'VIP' ? 'LICENSED_TRADESMAN' : 'SUB_DEALER');
       if (!role) return;
       body = { action, role };
     }
@@ -143,7 +143,7 @@ export default function Applications() {
         </select>
         <select value={channel} onChange={(e) => { setChannel(e.target.value); setPage(1); }}>
           <option value="">All channels</option>
-          <option value="VIP">VIP</option>
+          <option value="VIP">Plumbers &amp; Builders</option>
           <option value="TRADE">TRADE</option>
         </select>
         <select aria-label="Partnership type filter" value={partnershipType} onChange={(e) => { setPartnershipType(e.target.value); setPage(1); }}>

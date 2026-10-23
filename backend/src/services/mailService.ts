@@ -39,6 +39,7 @@ export interface SendMailInput {
   template: string;
   data: MailTemplateData;
   userId?: number | null;
+  replyTo?: string;
 }
 
 export async function sendMail(input: SendMailInput): Promise<boolean> {
@@ -61,6 +62,10 @@ export async function sendMail(input: SendMailInput): Promise<boolean> {
 
   const tp = getTransporter();
   if (!tp) {
+    if (isProd()) {
+      await prisma.emailLog.update({ where: { id: record.id }, data: { status: EmailStatus.FAILED, errorMessage: 'SMTP is not configured' } });
+      return false;
+    }
     // Dev mode: log email to disk
     try {
       const file = path.join(ensureDevMailDir(), `${Date.now()}-${input.template}.html`);
@@ -77,7 +82,7 @@ export async function sendMail(input: SendMailInput): Promise<boolean> {
   }
 
   try {
-    await tp.sendMail({ from: config.smtp.from, to: input.to, subject, text, html });
+    await tp.sendMail({ from: config.smtp.from, to: input.to, replyTo: input.replyTo, subject, text, html });
     await prisma.emailLog.update({
       where: { id: record.id },
       data: { status: EmailStatus.SENT, sentAt: new Date() },

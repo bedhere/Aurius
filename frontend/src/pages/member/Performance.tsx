@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { Alert } from '../../components/ui';
@@ -25,6 +26,7 @@ interface Referral {
 }
 
 export default function Performance() {
+  const { t } = useI18n();
   const { me } = useAuth();
   const [perf, setPerf] = useState<Performance | null>(null);
   const [refs, setRefs] = useState<Referral[]>([]);
@@ -76,45 +78,45 @@ export default function Performance() {
 
   return (
     <>
-      <h2>My Performance</h2>
-      {message && <Alert type={message.type}>{message.text}</Alert>}
+      <h2>{t("My Performance")}</h2>
+      {message && <Alert type={message.type}>{t(message.text)}</Alert>}
 
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-label">Total Orders</div>
+          <div className="stat-label">{t("Total Orders")}</div>
           <div className="stat-value">{perf?.totalOrders ?? 0}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Total Sales</div>
+          <div className="stat-label">{t("Total Sales")}</div>
           <div className="stat-value">{fmtMoney(perf?.totalSales ?? 0)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">This Month</div>
+          <div className="stat-label">{t("This Month")}</div>
           <div className="stat-value">{fmtMoney(perf?.monthSales ?? 0)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">This Year</div>
+          <div className="stat-label">{t("This Year")}</div>
           <div className="stat-value">{fmtMoney(perf?.yearSales ?? 0)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Installed Units</div>
+          <div className="stat-label">{t("Installed Units")}</div>
           <div className="stat-value">{perf?.totalInstalledUnits ?? 0}</div>
         </div>
       </div>
 
       <div className="panel">
-        <h3>Performance Adjustments</h3>
+        <h3>{t("Performance Adjustments")}</h3>
         {!perf || perf.adjustments.length === 0 ? (
-          <p className="muted small">No adjustments.</p>
+          <p className="muted small">{t("No adjustments.")}</p>
         ) : (
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Reason</th>
+                  <th>{t("Date")}</th>
+                  <th>{t("Type")}</th>
+                  <th>{t("Amount")}</th>
+                  <th>{t("Reason")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -122,7 +124,7 @@ export default function Performance() {
                   <tr key={a.id}>
                     <td>{fmtDateTime(a.adjustedAt)}</td>
                     <td>
-                      <span className={`badge ${statusBadgeClass(a.type)}`}>{a.type}</span>
+                      <span className={`badge ${statusBadgeClass(a.type)}`}>{t(a.type)}</span>
                     </td>
                     <td>{fmtMoney(a.adjustedAmount)}</td>
                     <td>{a.reason ?? '—'}</td>
@@ -135,18 +137,18 @@ export default function Performance() {
       </div>
 
       <div className="panel">
-        <h3>My Referrals</h3>
+        <h3>{t("My Referrals")}</h3>
         {refs.length === 0 ? (
-          <p className="muted small">No referral sales yet.</p>
+          <p className="muted small">{t("No referral sales yet.")}</p>
         ) : (
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Order</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
+                  <th>{t("Order")}</th>
+                  <th>{t("Date")}</th>
+                  <th>{t("Amount")}</th>
+                  <th>{t("Status")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +158,7 @@ export default function Performance() {
                     <td>{fmtDate(r.orderDate)}</td>
                     <td>{fmtMoney(r.orderAmount)}</td>
                     <td>
-                      <span className={`badge ${statusBadgeClass(r.status)}`}>{r.status}</span>
+                      <span className={`badge ${statusBadgeClass(r.status)}`}>{t(r.status)}</span>
                     </td>
                   </tr>
                 ))}
@@ -169,47 +171,47 @@ export default function Performance() {
       {isWaterworker && (
         <>
           <form className="panel" onSubmit={submitInstallation}>
-            <h3>Register an Installation</h3>
+            <h3>{t("Register an Installation")}</h3>
             <div className="form-grid-2">
               <div className="field">
-                <label>Product Name</label>
+                <label>{t("Product Name")}</label>
                 <input type="text" value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} required />
               </div>
               <div className="field">
-                <label>Serial Number</label>
+                <label>{t("Serial Number")}</label>
                 <input type="text" value={form.serialNumber} onChange={(e) => setForm({ ...form, serialNumber: e.target.value })} />
               </div>
               <div className="field">
-                <label>Installation Date</label>
+                <label>{t("Installation Date")}</label>
                 <input type="date" value={form.installationDate} onChange={(e) => setForm({ ...form, installationDate: e.target.value })} />
               </div>
               <div className="field">
-                <label>Installation Address</label>
+                <label>{t("Installation Address")}</label>
                 <input type="text" value={form.installationAddress} onChange={(e) => setForm({ ...form, installationAddress: e.target.value })} />
               </div>
               <div className="field">
-                <label>Customer Email (optional)</label>
+                <label>{t("Customer Email (optional)")}</label>
                 <input type="email" value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} />
               </div>
             </div>
             <button className="btn btn-primary" type="submit">
-              Register Installation
+              {t("Register Installation")}
             </button>
           </form>
 
           {installs.length > 0 && (
             <div className="panel">
-              <h3>My Installations</h3>
+              <h3>{t("My Installations")}</h3>
               <div className="table-wrap">
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>Product</th>
-                      <th>Serial</th>
-                      <th>Date</th>
-                      <th>Installation Address</th>
-                      <th>Customer Email (optional)</th>
-                      <th>Status</th>
+                      <th>{t("Product")}</th>
+                      <th>{t("Serial")}</th>
+                      <th>{t("Date")}</th>
+                      <th>{t("Installation Address")}</th>
+                      <th>{t("Customer Email (optional)")}</th>
+                      <th>{t("Status")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -221,7 +223,7 @@ export default function Performance() {
                         <td>{i.installationAddress ?? '—'}</td>
                         <td>{i.contactEmail ?? '—'}</td>
                         <td>
-                          <span className={`badge ${statusBadgeClass(i.status)}`}>{i.status}</span>
+                          <span className={`badge ${statusBadgeClass(i.status)}`}>{t(i.status)}</span>
                         </td>
                       </tr>
                     ))}

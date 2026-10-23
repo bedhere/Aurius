@@ -1,9 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { ok } from '../lib/response';
+import { AppError, ok } from '../lib/response';
 import { sendMail } from '../services/mailService';
 import { config } from '../config';
 import { listPublicDealerLocations } from '../controllers/dealerLocationController';
+import { validate, validated } from '../middleware/validate';
+import { contactEnquirySchema, partnershipEnquirySchema } from '../validators/enquiry.schema';
+import { z } from 'zod';
+import rateLimit from 'express-rate-limit';
+import { publicCompanyInfo } from '../lib/companyInfo';
 
 function parseSetting<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
@@ -29,38 +34,43 @@ router.get('/config', (_req: Request, res: Response) => {
   });
 });
 
-/** Contact form → emailed to the operations mailbox. */
-router.post('/contact', async (req: Request, res: Response, next) => {
+const enquiryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false,
+  message: { success: false, message: 'Too many enquiries. Please try again later or email info@aurius.com.au.', errors: [] },
+});
+
+/** Public enquiries use the existing SMTP transport and the official inbox. */
+router.post('/contact', enquiryLimiter, validate(contactEnquirySchema), async (req: Request, res: Response, next) => {
   try {
-    const body = req.body as { name: string; email: string; phone?: string; subject?: string; message: string };
-    if (!body.name || !body.email || !body.message) {
-      res.status(400).json({ success: false, message: 'Name, email and message are required', errors: [] });
-      return;
-    }
-    const opsEmail = process.env.ADMIN_EMAIL || config.adminEmail;
-    await sendMail({
-      to: opsEmail,
-      template: 'SECURITY_ALERT', // reuse simple notification layout
-      data: {
-        details: `New website enquiry from ${body.name} (${body.email}${body.phone ? `, ${body.phone}` : ''}): ${body.message}`,
-      },
+    const body = validated<z.infer<typeof contactEnquirySchema>>(req);
+    const sent = await sendMail({
+      to: 'info@aurius.com.au', replyTo: body.email, template: 'CONTACT_ENQUIRY', data: body,
     });
-    ok(res, null, 'Thank you for contacting AURIUS. Our team will get back to you shortly.');
+    if (!sent) throw new AppError(503, 'We could not send your enquiry. Please try again or email info@aurius.com.au.');
+    ok(res, null, 'Your enquiry has been received. Our team will respond as soon as possible.');
   } catch (err) {
     next(err);
   }
+});
+
+/** Recruitment only: never creates a user, application account or ordering access. */
+router.post('/partnership-enquiries', enquiryLimiter, validate(partnershipEnquirySchema), async (req: Request, res: Response, next) => {
+  try {
+    const body = validated<z.infer<typeof partnershipEnquirySchema>>(req);
+    const sent = await sendMail({
+      to: 'info@aurius.com.au', replyTo: body.email, template: 'PARTNERSHIP_ENQUIRY',
+      data: { ...body, interestedProducts: body.interestedProducts.join(', ') },
+    });
+    if (!sent) throw new AppError(503, 'We could not send your enquiry. Please try again or email info@aurius.com.au.');
+    ok(res, null, 'Your partnership enquiry has been received. Our team will review your details and contact you.');
+  } catch (err) { next(err); }
 });
 
 /** System settings visible to the public (footer contact info etc.). */
 router.get('/company-info', async (_req: Request, res: Response, next) => {
   try {
     const setting = await prisma.systemSetting.findUnique({ where: { key: 'COMPANY_CONTACT' } });
-    ok(
-      res,
-      setting
-        ? (() => { try { return JSON.parse(setting.value); } catch { return null; } })()
-        : { phone: '+61 2 8000 0000', email: config.adminEmail, address: 'Sydney NSW, Australia' },
-    );
+    ok(res, publicCompanyInfo(parseSetting(setting?.value, null)));
   } catch (err) {
     next(err);
   }
@@ -73,7 +83,7 @@ router.get('/site-content', async (_req: Request, res: Response, next) => {
     });
     const map = Object.fromEntries(settings.map((setting) => [setting.key, parseSetting(setting.value, null)]));
     ok(res, {
-      company: map.COMPANY_CONTACT ?? { phone: '+61 2 8000 0000', email: config.adminEmail, address: 'Sydney NSW, Australia' },
+      company: publicCompanyInfo(map.COMPANY_CONTACT),
       homepageMedia: Array.isArray(map.HOMEPAGE_MEDIA) ? map.HOMEPAGE_MEDIA : [],
       dealers: Array.isArray(map.DEALER_LOCATIONS) ? map.DEALER_LOCATIONS : [],
       googleMapsApiKey: config.googleMaps.apiKey || '',

@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
@@ -7,6 +8,7 @@ import { fmtDate, fmtMoney, roleLabel, statusBadgeClass } from '../../utils/form
 import '../../assets/styles/pages-member.css';
 
 export default function Dashboard() {
+  const { t } = useI18n();
   const { me, user } = useAuth();
   const [perf, setPerf] = useState<{ totalOrders: number; totalSales: number; monthSales: number; totalInstalledUnits: number } | null>(null);
   const [orders, setOrders] = useState<{ items: { id: number; orderNumber: string; createdAt: string; total: number; status: string }[] } | null>(null);
@@ -19,31 +21,30 @@ export default function Dashboard() {
   if (me?.underReview) {
     return (
       <div className="review-banner">
-        <h2>Your application is under review.</h2>
+        <h2>{t("Your application is under review.")}</h2>
         <p className="muted">
-          You can view your basic profile and review status. Trade pricing, ordering and the download
-          centre become available once your application is approved.
+          {t("You can view your basic profile and review status. Trade pricing, ordering and the download centre become available once your application is approved.")}
         </p>
         {me.applicationStatus && (
-          <span className={`badge ${statusBadgeClass(me.applicationStatus)}`}>{me.applicationStatus}</span>
+          <span className={`badge ${statusBadgeClass(me.applicationStatus)}`}>{t(me.applicationStatus)}</span>
         )}
         {me.requestedInfo && (
           <div className="mt-2">
             <Alert type="info">
-              <strong>Action required:</strong> {me.requestedInfo}
+              <strong>{t("Action required:")}</strong> {me.requestedInfo}
             </Alert>
           </div>
         )}
         {me.rejectReason && (
           <div className="mt-2">
             <Alert type="error">
-              <strong>Application returned:</strong> {me.rejectReason}
+              <strong>{t("Application returned:")}</strong> {me.rejectReason}
             </Alert>
           </div>
         )}
         <div className="mt-2">
           <Link to="/member/profile" className="btn btn-primary">
-            View My Profile
+            {t("View My Profile")}
           </Link>
         </div>
       </div>
@@ -53,46 +54,46 @@ export default function Dashboard() {
   return (
     <>
       <div className="member-hero">
-        <h2>Welcome back{me?.memberProfile?.firstName ? `, ${me.memberProfile.firstName}` : ''}</h2>
+        <h2>{t("Welcome back")}{me?.memberProfile?.firstName ? `, ${me.memberProfile.firstName}` : ''}</h2>
         <p className="small muted" style={{ margin: 0 }}>
-          {me?.memberId?.aurId ? `AURIUS Member ID: ${me.memberId.aurId}` : 'Member'} · {user ? roleLabel(user.role) : ''}
+          {me?.memberId?.aurId ? `${t('AURIUS Member ID:')} ${me.memberId.aurId}` : t("Member")} · {user ? t(roleLabel(user.role)) : ''}
         </p>
       </div>
 
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-label">Total Orders</div>
+          <div className="stat-label">{t("Total Orders")}</div>
           <div className="stat-value">{perf?.totalOrders ?? 0}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Total Sales</div>
+          <div className="stat-label">{t("Total Sales")}</div>
           <div className="stat-value">{fmtMoney(perf?.totalSales ?? 0)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">This Month</div>
+          <div className="stat-label">{t("This Month")}</div>
           <div className="stat-value">{fmtMoney(perf?.monthSales ?? 0)}</div>
         </div>
         <div className="stat-card">
-          <div className="stat-label">Installed Units</div>
+          <div className="stat-label">{t("Installed Units")}</div>
           <div className="stat-value">{perf?.totalInstalledUnits ?? 0}</div>
         </div>
       </div>
 
       <div className="panel">
-        <h3>Recent Orders</h3>
+        <h3>{t("Recent Orders")}</h3>
         {orders === null ? (
-          <p className="muted small">Order history unavailable.</p>
+          <p className="muted small">{t("Order history unavailable.")}</p>
         ) : orders.items.length === 0 ? (
-          <p className="muted">No orders yet.</p>
+          <p className="muted">{t("No orders yet.")}</p>
         ) : (
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Order</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Total</th>
+                  <th>{t("Order")}</th>
+                  <th>{t("Date")}</th>
+                  <th>{t("Status")}</th>
+                  <th>{t("Total")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -102,12 +103,12 @@ export default function Dashboard() {
                     <td>{o.orderNumber}</td>
                     <td>{fmtDate(o.createdAt)}</td>
                     <td>
-                      <span className={`badge ${statusBadgeClass(o.status)}`}>{o.status}</span>
+                      <span className={`badge ${statusBadgeClass(o.status)}`}>{t(o.status)}</span>
                     </td>
                     <td>{fmtMoney(o.total)}</td>
                     <td>
                       <Link to={`/member/orders/${o.id}`} className="btn btn-outline btn-sm">
-                        View
+                        {t("View")}
                       </Link>
                     </td>
                   </tr>
@@ -118,7 +119,7 @@ export default function Dashboard() {
         )}
         <div className="mt-2">
           <Link to="/member/orders" className="btn btn-ghost btn-sm">
-            View all orders
+            {t("View all orders")}
           </Link>
         </div>
       </div>

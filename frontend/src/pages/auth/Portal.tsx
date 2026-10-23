@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
@@ -82,13 +83,15 @@ const EXP_LEVELS = [
   'Expert (regular installations)',
 ];
 
-export default function Portal({ channel }: { channel: Channel }) {
+export default function Portal({ channel, application = false }: { channel: Channel; application?: boolean }) {
+  const { t } = useI18n();
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialPartnership = channel === 'VIP' ? 'TRADE_PROFESSIONAL'
     : searchParams.get('partner') === 'regional-distributor' ? 'REGIONAL_DISTRIBUTOR' : 'DEALER';
-  const [tab, setTab] = useState<'login' | 'register'>(() => searchParams.get('tab') === 'register' ? 'register' : 'login');
+  const tab = application || searchParams.get('tab') === 'register' ? 'register' : 'login';
+  const portalPath = channel === 'VIP' ? '/plumbers-builders' : '/trade';
   const [step, setStep] = useState(1);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -105,14 +108,13 @@ export default function Portal({ channel }: { channel: Channel }) {
   const isRegional = !isVIP && reg.partnershipType === 'REGIONAL_DISTRIBUTOR';
 
   useEffect(() => {
-    setTab(searchParams.get('tab') === 'register' ? 'register' : 'login');
     setReg({ ...emptyForm, partnershipType: initialPartnership });
     setStep(1);
     setErrors({});
     setError(null);
     setSuccess(null);
     setLicenceFile(null);
-  }, [channel, searchParams, initialPartnership]);
+  }, [channel, searchParams, initialPartnership, application]);
 
   useEffect(() => {
     api
@@ -249,13 +251,13 @@ export default function Portal({ channel }: { channel: Channel }) {
           /* registration still succeeded; file upload can be completed later */
         }
       }
-      setSuccess('Application submitted. Our team will review your qualifications. You can track the status in the member centre.');
+      setSuccess('Application submitted. AURIUS will review your details and manually activate your account if approved. Trade pricing and online ordering remain unavailable until approval.');
       setReg({ ...emptyForm, partnershipType: initialPartnership });
       setStep(1);
     } catch (err) {
       const apiErr = err as ApiError;
       const validationMessages = apiErr.errors.map((fe) => fe.message);
-      setError([apiErr.message, ...validationMessages].join(': '));
+      setError([t(apiErr.message), ...validationMessages.map(t)].join(': '));
       if (apiErr.errors?.length) {
         const fieldErrors: Record<string, string> = {};
         apiErr.errors.forEach((fe) => {
@@ -268,60 +270,50 @@ export default function Portal({ channel }: { channel: Channel }) {
     }
   };
 
-  const fieldErr = (k: string) => (errors[k] ? <span className="error-text">{errors[k]}</span> : null);
+  const fieldErr = (k: string) => (errors[k] ? <span className="error-text">{t(errors[k])}</span> : null);
 
   return (
     <section className="section">
       <div className={`auth-wrap ${tab === 'register' ? 'wide' : ''}`}>
         <div className="center mb-2">
-          <h2 className="section-title">{isVIP ? 'Trade Professional Portal' : isRegional ? 'Regional Distributor Application' : 'Trade Partner Portal'}</h2>
+          <h1 className="section-title">{isVIP ? t("Plumbers & Builders Portal") : t("Trade Partner Portal")}</h1>
           <p className="section-sub" style={{ marginBottom: 0 }}>
             {isVIP
-              ? 'For licensed Australian plumbers and electricians only.'
-              : isRegional ? 'Apply to become an authorised AURIUS regional distributor. All territories are subject to review and approval.'
-                : 'For regional distributors, dealers and professional business partners.'}
+              ? t("Exclusive access for registered plumbers, builders and approved trade professionals.")
+              : t("Exclusive access for authorised AURIUS distributors and channel partners.")}
           </p>
         </div>
 
-        <div className="auth-tabs">
-          <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => setTab('login')}>
-            Log In
-          </button>
-          <button className={`auth-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => setTab('register')}>
-            Register
-          </button>
-        </div>
+        {tab === 'register' && <p className="center"><Link to={portalPath}>{t("Back to Account Login")}</Link></p>}
 
         {error && <Alert type="error">{error}</Alert>}
         {success && <Alert type="success">{success}</Alert>}
 
         {tab === 'login' ? (
           <form className="form-card" onSubmit={doLogin}>
-            <h3>{isVIP ? 'Member Login' : 'Trade Partner Login'}</h3>
+            <h3>{isVIP ? t("Trade Account Login") : t("Trade Partner Login")}</h3>
             <div className="field">
-              <label>Email Address</label>
-              <input type="email" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} required />
+              <label htmlFor="portal-email">{t("Email Address")}</label>
+              <input id="portal-email" type="email" autoComplete="username" value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} required />
             </div>
             <div className="field">
-              <label>Password</label>
-              <input type="password" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} required />
+              <label htmlFor="portal-password">{t("Password")}</label>
+              <input id="portal-password" type="password" autoComplete="current-password" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} required />
             </div>
             <button className="btn btn-primary" type="submit" disabled={busy}>
-              {busy ? 'Logging in…' : 'Log In'}
+              {busy ? t("Logging in…") : t("Log In")}
             </button>
             <div className="mt-1 small">
-              <Link to="/forgot-password">Forgot password?</Link>
+              <Link to="/forgot-password">{t("Forgot password?")}</Link>
             </div>
-            <div className="auth-sep">— or —</div>
-            <button type="button" className="btn btn-outline" style={{ width: '100%' }} onClick={() => setTab('register')}>
-              Create an account
-            </button>
+            <div className="auth-sep">{t("— or —")}</div>
+            <Link className="btn btn-outline" style={{ width: '100%' }} to={`${portalPath}/apply`}>{t("Apply for a Trade Account")}</Link>
+            <p className="auth-approval-note">{isVIP ? t("Account approval is required to access trade pricing and online ordering.") : t("Trade accounts are subject to approval by AURIUS. Access to partner pricing and online ordering is available only to approved account holders.")}</p>
           </form>
         ) : (
           <div className="form-card">
-            <h3>{isVIP ? 'Aurius Trade Professional Registration' : 'Aurius Trade Partner Registration'}</h3>
-            <p className="muted small">{isVIP ? 'For licensed Australian plumbers and electricians only.' : 'Register your business for trade access.'}</p>
-            {isVIP && <p className="small">Dealers, installers and other business partners: <Link to="/trade?tab=register">apply through our Trade Partner Portal</Link>.</p>}
+            <h3>{isVIP ? t("Plumbers & Builders Account Application") : t("Trade Partner Account Application")}</h3>
+            <p className="auth-approval-note">{t("Account approval is required to access trade pricing and online ordering. AURIUS reviews and activates accounts manually.")}</p>
 
             <div className="step-indicator">
               <div className={`step-dot ${step >= 1 ? 'active' : ''}`} />
@@ -333,63 +325,63 @@ export default function Portal({ channel }: { channel: Channel }) {
               <>
                 {!isVIP && <>
                   <div className="field">
-                    <label htmlFor="partnership-type">Partnership Type <span className="req">*</span></label>
+                    <label htmlFor="partnership-type">{t("Partnership Type")} <span className="req">*</span></label>
                     <select id="partnership-type" value={reg.partnershipType} onChange={set('partnershipType')}>
-                      <option value="REGIONAL_DISTRIBUTOR">Regional Distributor (Level 1)</option>
-                      <option value="DEALER">Dealer / Reseller</option>
-                      <option value="TRADE_PROFESSIONAL">Installer / Other Trade Professional</option>
+                      <option value="REGIONAL_DISTRIBUTOR">{t("Primary Dealer / Regional Distributor")}</option>
+                      <option value="DEALER">{t("Distributor / Channel Partner")}</option>
                     </select>
                   </div>
                   {isRegional && <div className="field">
-                    <label htmlFor="intended-territory">Intended Distribution Territory <span className="req">*</span></label>
-                    <input id="intended-territory" type="text" maxLength={200} placeholder="e.g. Greater Sydney, NSW" value={reg.intendedTerritory} onChange={set('intendedTerritory')} />
-                    <div className="hint">Tell us the region you would like to represent. Territory allocation is subject to approval.</div>
+                    <label htmlFor="intended-territory">{t("Intended Distribution Territory")} <span className="req">*</span></label>
+                    <input id="intended-territory" type="text" maxLength={200} placeholder={t("e.g. Greater Sydney, NSW")} value={reg.intendedTerritory} onChange={set('intendedTerritory')} />
+                    <div className="hint">{t("Recorded for AURIUS internal account review.")}</div>
                     {fieldErr('intendedTerritory')}
                   </div>}
                 </>}
                 {isVIP && (
                   <div className="field">
                     <label>
-                      Trade Type <span className="req">*</span>
+                      {t("Trade Type")} <span className="req">*</span>
                     </label>
                     <select value={reg.tradeType} onChange={set('tradeType')}>
-                      <option value="">Select…</option>
-                      <option value="LICENSED_PLUMPER">Licensed Plumber</option>
-                      <option value="LICENSED_ELECTRICIAN">Licensed Electrician</option>
+                      <option value="">{t("Select…")}</option>
+                      <option value="LICENSED_PLUMPER">{t("Licensed Plumber")}</option>
+                      <option value="BUILDER">{t("Builder")}</option>
+                      <option value="LICENSED_ELECTRICIAN">{t("Licensed Electrician")}</option>
                     </select>
                     {fieldErr('tradeType')}
                   </div>
                 )}
                 <div className="field">
                   <label>
-                    Australian State / Territory <span className="req">*</span>
+                    {t("Australian State / Territory")} <span className="req">*</span>
                   </label>
                   <select value={reg.state} onChange={set('state')}>
-                    <option value="">Select…</option>
+                    <option value="">{t("Select…")}</option>
                     {AU_STATES.map((s) => (
                       <option key={s} value={s}>
-                        {s}
+                        {t(`stockists.state.${s}`)} ({s})
                       </option>
                     ))}
                   </select>
                   {fieldErr('state')}
                 </div>
-                <div className="field">
-                  <label>Licence Type</label>
+                {isVIP && <div className="field">
+                  <label>{t("Licence Type")}</label>
                   <select value={reg.licenceType} onChange={set('licenceType')}>
-                    <option value="">Select…</option>
-                    <option value="INDIVIDUAL">Individual Licence</option>
-                    <option value="COMPANY">Company Licence</option>
+                    <option value="">{t("Select…")}</option>
+                    <option value="INDIVIDUAL">{t("Individual Licence")}</option>
+                    <option value="COMPANY">{t("Company Licence")}</option>
                   </select>
                   {fieldErr('licenceType')}
-                </div>
-                <div className="field">
-                  <label>{isVIP ? 'Licence Number' : 'Licence Number (optional)'}</label>
-                  <input type="text" placeholder={isVIP ? 'e.g. PLB-12345 or EC-67890' : 'e.g. PLB-12345'} value={reg.licenceNumber} onChange={set('licenceNumber')} />
+                </div>}
+                {isVIP && <div className="field">
+                  <label>{isVIP ? t("Licence Number") : t("Licence Number (optional)")}</label>
+                  <input type="text" placeholder={isVIP ? t("e.g. PLB-12345 or EC-67890") : t("e.g. PLB-12345")} value={reg.licenceNumber} onChange={set('licenceNumber')} />
                   {fieldErr('licenceNumber')}
-                </div>
+                </div>}
                 <button className="btn btn-primary" onClick={next}>
-                  Continue
+                  {t("Continue")}
                 </button>
               </>
             )}
@@ -399,14 +391,14 @@ export default function Portal({ channel }: { channel: Channel }) {
                 <div className="form-grid-2">
                   <div className="field">
                     <label>
-                      First Name <span className="req">*</span>
+                      {t("First Name")} <span className="req">*</span>
                     </label>
                     <input type="text" value={reg.firstName} onChange={set('firstName')} />
                     {fieldErr('firstName')}
                   </div>
                   <div className="field">
                     <label>
-                      Last Name <span className="req">*</span>
+                      {t("Last Name")} <span className="req">*</span>
                     </label>
                     <input type="text" value={reg.lastName} onChange={set('lastName')} />
                     {fieldErr('lastName')}
@@ -414,15 +406,15 @@ export default function Portal({ channel }: { channel: Channel }) {
                 </div>
                 <div className="field">
                   <label>
-                    Company Name <span className="req">*</span>
+                    {t("Company Name")} <span className="req">*</span>
                   </label>
                   <input type="text" value={reg.companyName} onChange={set('companyName')} />
-                  <div className="hint">If self-employed, enter your full name</div>
+                  <div className="hint">{t("If self-employed, enter your full name")}</div>
                   {fieldErr('companyName')}
                 </div>
                 <div className="field">
                   <label>
-                    Street Address <span className="req">*</span>
+                    {t("Street Address")} <span className="req">*</span>
                   </label>
                   <input type="text" value={reg.streetAddress} onChange={set('streetAddress')} />
                   {fieldErr('streetAddress')}
@@ -430,14 +422,14 @@ export default function Portal({ channel }: { channel: Channel }) {
                 <div className="form-grid-2">
                   <div className="field">
                     <label>
-                      Suburb <span className="req">*</span>
+                      {t("Suburb")} <span className="req">*</span>
                     </label>
                     <input type="text" value={reg.suburb} onChange={set('suburb')} />
                     {fieldErr('suburb')}
                   </div>
                   <div className="field">
                     <label>
-                      Postcode <span className="req">*</span>
+                      {t("Postcode")} <span className="req">*</span>
                     </label>
                     <input type="text" value={reg.postcode} onChange={set('postcode')} />
                     {fieldErr('postcode')}
@@ -445,33 +437,33 @@ export default function Portal({ channel }: { channel: Channel }) {
                 </div>
                 <div className="form-grid-2">
                   <div className="field">
-                    <label>Country</label>
+                    <label>{t("Country")}</label>
                     <select value={reg.country} onChange={set('country')}>
                       {COUNTRIES.map((c) => (
                         <option key={c} value={c}>
-                          {c}
+                          {t(c)}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div className="field">
                     <label>
-                      Phone Number <span className="req">*</span>
+                      {t("Phone Number")} <span className="req">*</span>
                     </label>
                     <input type="tel" value={reg.phone} onChange={set('phone')} />
                     {fieldErr('phone')}
                   </div>
                 </div>
                 <div className="field">
-                  <label>Website / Social Media (optional)</label>
+                  <label>{t("Website / Social Media (optional)")}</label>
                   <input type="text" value={reg.website} onChange={set('website')} />
                 </div>
                 <div className="flex gap-2">
                   <button className="btn btn-ghost" onClick={() => setStep(1)}>
-                    Back
+                    {t("Back")}
                   </button>
                   <button className="btn btn-primary" onClick={next}>
-                    Continue
+                    {t("Continue")}
                   </button>
                 </div>
               </>
@@ -481,43 +473,43 @@ export default function Portal({ channel }: { channel: Channel }) {
               <>
                 <div className="form-grid-2">
                   <div className="field">
-                    <label>Email Address</label>
+                    <label>{t("Email Address")}</label>
                     <input type="email" value={reg.email} onChange={set('email')} />
                     {fieldErr('email')}
                   </div>
                   <div className="field">
-                    <label>Years of Experience</label>
+                    <label>{t("Years of Experience")}</label>
                     <select value={reg.yearsExperience} onChange={set('yearsExperience')}>
-                      <option value="">Select…</option>
+                      <option value="">{t("Select…")}</option>
                       {YEARS.map((y) => (
                         <option key={y.value} value={y.value}>
-                          {y.label}
+                          {t(y.label)}
                         </option>
                       ))}
                     </select>
                   </div>
                 </div>
-                {isVIP && (
+                {isVIP && reg.tradeType !== 'BUILDER' && (
                   <div className="form-grid-2">
                     <div className="field">
-                      <label>Smart Toilet Installation Experience</label>
+                      <label>{t("Smart Toilet Installation Experience")}</label>
                       <select value={reg.smartToiletExp} onChange={set('smartToiletExp')}>
-                        <option value="">Select…</option>
+                        <option value="">{t("Select…")}</option>
                         {EXP_LEVELS.map((l) => (
                           <option key={l} value={l}>
-                            {l}
+                            {t(l)}
                           </option>
                         ))}
                       </select>
                       {fieldErr('smartToiletExp')}
                     </div>
                     <div className="field">
-                      <label>Whole-House Water Purification Installation Experience</label>
+                      <label>{t("Whole-House Water Purification Installation Experience")}</label>
                       <select value={reg.waterPurifExp} onChange={set('waterPurifExp')}>
-                        <option value="">Select…</option>
+                        <option value="">{t("Select…")}</option>
                         {EXP_LEVELS.map((l) => (
                           <option key={l} value={l}>
-                            {l}
+                            {t(l)}
                           </option>
                         ))}
                       </select>
@@ -527,47 +519,47 @@ export default function Portal({ channel }: { channel: Channel }) {
                 )}
                 <div className="form-grid-2">
                   <div className="field">
-                    <label>Password</label>
+                    <label>{t("Password")}</label>
                     <input type="password" value={reg.password} onChange={set('password')} />
-                    <div className="hint">Min 8 characters: uppercase, lowercase, number &amp; special character</div>
+                    <div className="hint">{t("Min 8 characters: uppercase, lowercase, number & special character")}</div>
                     {fieldErr('password')}
                   </div>
                   <div className="field">
-                    <label>Confirm Password</label>
+                    <label>{t("Confirm Password")}</label>
                     <input type="password" value={reg.confirmPassword} onChange={set('confirmPassword')} />
                     {fieldErr('confirmPassword')}
                   </div>
                 </div>
                 <div className="field">
-                  <label>ABN Number ({isVIP ? 'optional' : 'recommended'})</label>
-                  <input type="text" placeholder="11-digit ABN" value={reg.abnNumber} onChange={set('abnNumber')} />
+                  <label>{t("ABN Number (")}{isVIP ? t("optional") : t("recommended")})</label>
+                  <input type="text" placeholder={t("11-digit ABN")} value={reg.abnNumber} onChange={set('abnNumber')} />
                   {fieldErr('abnNumber')}
                 </div>
                 <div className="field">
                   <label>
-                    Business Interest / Main Categories <span className="req">*</span>
+                    {t("Business Interest / Main Categories")} <span className="req">*</span>
                   </label>
                   <div className="flex gap-1 wrap">
                     {['Smart Toilet', 'Whole-House Water Purification', 'All Categories'].map((v) => (
                       <label key={v} className="checkbox-row">
                         <input type="checkbox" checked={reg.businessInterest.includes(v)} onChange={() => toggleInterest(v)} />
-                        {v}
+                        {t(v)}
                       </label>
                     ))}
                   </div>
                   {fieldErr('businessInterest')}
                 </div>
                 <div className="field">
-                  <label>Additional Notes (optional)</label>
+                  <label>{t("Additional Notes (optional)")}</label>
                   <textarea
-                    placeholder="Specialty areas, project references, existing brands, expected annual purchase, regional resources"
+                    placeholder={t("Specialty areas, project references, existing brands, expected annual purchase, regional resources")}
                     value={reg.additionalNotes}
                     onChange={set('additionalNotes')}
                   />
                 </div>
                 {isVIP && (
                   <div className="field">
-                    <label>Licence Document (JPG/PNG/PDF, max 5MB)</label>
+                    <label>{t("Licence Document (JPG/PNG/PDF, max 5MB)")}</label>
                     <div className="upload-box">
                       <input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => setLicenceFile(e.target.files?.[0] ?? null)} />
                       {licenceFile && <p className="small mt-1">{licenceFile.name}</p>}
@@ -578,8 +570,8 @@ export default function Portal({ channel }: { channel: Channel }) {
                   <label className="checkbox-row">
                     <input type="checkbox" checked={reg.privacyConsent} onChange={(e) => setReg({ ...reg, privacyConsent: e.target.checked })} />
                     <span>
-                      I have read and agree to the <Link to="/privacy-policy">Privacy Policy</Link> and{' '}
-                      <Link to="/terms">Terms of Service</Link>.
+                      {t("I have read and agree to the")} <Link to="/privacy-policy">{t("Privacy Policy")}</Link> {t("and")}{' '}
+                      <Link to="/terms">{t("Terms of Service")}</Link>.
                     </span>
                   </label>
                   {fieldErr('privacyConsent')}
@@ -588,7 +580,7 @@ export default function Portal({ channel }: { channel: Channel }) {
                   <label className="checkbox-row">
                     <input type="checkbox" checked={reg.dealerAgreement} onChange={(e) => setReg({ ...reg, dealerAgreement: e.target.checked })} />
                     <span>
-                      I agree to the <Link to="/dealer-agreement">Dealer / Trade Agreement</Link>.
+                      {t("I agree to the")} <Link to="/dealer-agreement">{t("Dealer / Trade Agreement")}</Link>.
                     </span>
                   </label>
                   {fieldErr('dealerAgreement')}
@@ -596,7 +588,7 @@ export default function Portal({ channel }: { channel: Channel }) {
                 <div className="field">
                   <label className="checkbox-row">
                     <input type="checkbox" checked={reg.marketingConsent} onChange={(e) => setReg({ ...reg, marketingConsent: e.target.checked })} />
-                    <span>I agree to receive product updates, installation guides and trade offers from Aurius.</span>
+                    <span>{t("I agree to receive product updates, installation guides and trade offers from Aurius.")}</span>
                   </label>
                 </div>
                 {siteKey && (
@@ -606,10 +598,10 @@ export default function Portal({ channel }: { channel: Channel }) {
                 )}
                 <div className="flex gap-2">
                   <button className="btn btn-ghost" onClick={() => setStep(2)}>
-                    Back
+                    {t("Back")}
                   </button>
                   <button className="btn btn-primary btn-lg" onClick={submitReg} disabled={busy}>
-                    {busy ? 'Submitting…' : 'Submit Application'}
+                    {busy ? t("Submitting…") : t("Submit Application")}
                   </button>
                 </div>
               </>

@@ -4,6 +4,7 @@ import { api, ApiError } from '../../api/client';
 import { ProductItem, ProductVariant } from '../../api/types';
 import { Alert, PageLoading, PriceDisplay } from '../../components/ui';
 import ProductWarrantyBadge from '../../components/ProductWarrantyBadge';
+import { productLabel } from '../../utils/product-label';
 import InstallmentPaymentEntry from '../../components/InstallmentPaymentEntry';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n/LanguageContext';
@@ -88,10 +89,10 @@ export default function ProductDetail() {
     if (!product) return '';
     const category = typeof product.category === 'string' ? product.category.toLowerCase() : '';
     const isDrain = product.productCode === FLOOR_DRAIN_CODE || category.includes('drain') || product.displayStyle === 'engineering';
-    if (isDrain) return product.dimensionSpec ?? '115 × 115 mm · Ø80 mm outlet · SUS304 · 1.2 mm material thickness';
+    if (isDrain) return product.dimensionSpec ?? t('115 × 115 mm · Ø80 mm outlet · SUS304 · 1.2 mm material thickness');
     if (product.dimensionSpec) return product.dimensionSpec;
-    return `Available sizes: ${specs.sizes?.join(' / ') || 'Standard fit'}`;
-  }, [product, specs.sizes]);
+    return `${t('Available sizes:')} ${specs.sizes?.join(' / ') || t('Standard fit')}`;
+  }, [product, specs.sizes, t]);
 
   if (loading) {
     return <PageLoading />;
@@ -101,7 +102,7 @@ export default function ProductDetail() {
     return (
       <section className="section">
         <div className="container center">
-          <Alert type="error">{loadError ? '商品详情加载失败，请稍后重试。' : t('detail.notFound')}</Alert>
+          <Alert type="error">{loadError ? t('Product details could not be loaded. Please try again later.') : t('detail.notFound')}</Alert>
           <Link to="/products" className="btn btn-outline mt-2">{t('common.backProducts')}</Link>
         </div>
       </section>
@@ -191,7 +192,7 @@ export default function ProductDetail() {
       <div className="container">
         <div className="product-detail__header">
           <Link to="/products" className="small">{t('common.backProducts')}</Link>
-          <Link to="/trade" className="product-detail__partner">Become Partner</Link>
+          <Link to="/become-a-partner" className="product-detail__partner">{t('Become an AURIUS Partner')}</Link>
         </div>
 
         <div className="product-detail mt-2">
@@ -231,18 +232,18 @@ export default function ProductDetail() {
                   ))}
                 </div>
               ) : (
-                <p className="muted small">{product.dimensionSpec ?? 'Please confirm measurements before installation.'}</p>
+                <p className="muted small">{product.dimensionSpec ?? t('Please confirm measurements before installation.')}</p>
               )}
             </div>
           </div>
 
           <div>
-            <span className="card__cat">{product.category}</span>
+            <span className="card__cat">{t(product.category)}</span>
             {product.series && <p className="product-detail__series">{product.series}</p>}
-            <h1 className="product-detail__title">{product.name}</h1>
+            <h1 className="product-detail__title">{productLabel(product).series}{productLabel(product).model && <span className="product-card__model"> | {productLabel(product).model}</span>}</h1>
             {product.model && <p className="muted small">{t('common.model')} {product.model} | SKU {product.sku}</p>}
             <p>{product.description}</p>
-            {product.giftable && <p className="badge badge-green">可作为赠品</p>}
+            {product.giftable && <p className="badge badge-green">{t('Gift eligible')}</p>}
 
             <div className="mb-2">
               <div className="product-detail__price-row">
@@ -285,9 +286,9 @@ export default function ProductDetail() {
                 {adding ? t('detail.adding') : t('detail.add')}
               </button>
             ) : isFloorDrain ? (
-              <Link to="/contact" className="btn btn-primary btn-lg">联系工程定制</Link>
+              <Link to="/contact" className="btn btn-primary btn-lg">{t('Enquire About Custom Projects')}</Link>
             ) : canRetailBuy ? (
-              <Link to={guestCheckoutLink} className="btn btn-primary btn-lg">零售购买</Link>
+              <Link to={guestCheckoutLink} className="btn btn-primary btn-lg">{t('Buy Now')}</Link>
             ) : (
               <p className="small muted">{t('detail.approval')}</p>
             )}

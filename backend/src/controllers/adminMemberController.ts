@@ -130,16 +130,12 @@ export async function reviewApplication(req: Request, res: Response, next: NextF
 
     switch (body.action) {
       case 'APPROVE': {
-        const role = body.role ?? (app.tradeType !== 'NOT_APPLICABLE' ? UserRole.LICENSED_TRADESMAN : UserRole.SUB_DEALER);
+        const role = body.role ?? (app.tradeType === 'BUILDER' ? UserRole.BUILDER : app.tradeType !== 'NOT_APPLICABLE' ? UserRole.LICENSED_TRADESMAN : UserRole.SUB_DEALER);
         if (!['REGIONAL_AGENT', 'LICENSED_TRADESMAN', 'SUB_DEALER', 'WATERWORKER', 'BUILDER'].includes(role)) {
           throw badRequest('A valid member role is required for approval');
         }
-        if (role === 'WATERWORKER' || role === 'BUILDER') {
-          const verification = await verifyAbn(id, admin.id, ipOf(req));
-          if (!verification.configured || !verification.success) {
-            throw badRequest(`ABR verification required: ${verification.message}`);
-          }
-        }
+        // Accounts are opened by the reviewing administrator. ABN verification
+        // remains available separately and does not require a live ABR integration.
         const r = await approveApplication(id, admin, role, body.reason ?? 'Approved', ipOf(req));
         ok(res, r, 'Application approved');
         return;

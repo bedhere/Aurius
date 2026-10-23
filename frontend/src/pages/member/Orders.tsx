@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
@@ -9,6 +10,7 @@ import '../../assets/styles/pages-member.css';
 const STATUSES = ['All', 'PENDING_PAYMENT', 'PAYMENT_PROCESSING', 'PAID', 'PREPARING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED'];
 
 export default function Orders() {
+  const { t } = useI18n();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get('status') ?? 'All';
   const [page, setPage] = useState(1);
@@ -29,12 +31,12 @@ export default function Orders() {
 
   return (
     <>
-      <h2>My Orders</h2>
+      <h2>{t("My Orders")}</h2>
       <div className="toolbar">
         <div className="flex gap-1 wrap">
           {STATUSES.map((s) => (
             <button key={s} className={`cat-chip ${status === s ? 'active' : ''}`} onClick={() => selectStatus(s)}>
-              {s}
+              {t(s)}
             </button>
           ))}
         </div>
@@ -43,20 +45,20 @@ export default function Orders() {
       {!data ? (
         <Spinner />
       ) : data.items.length === 0 ? (
-        <p className="muted">No orders found.</p>
+        <p className="muted">{t("No orders found.")}</p>
       ) : (
         <>
           <div className="table-wrap">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Order Number</th>
-                  <th>Date</th>
-                  <th>Items</th>
-                  <th>Total</th>
-                  <th>Payment</th>
-                  <th>Shipment</th>
-                  <th>Status</th>
+                  <th>{t("Order Number")}</th>
+                  <th>{t("Date")}</th>
+                  <th>{t("Items")}</th>
+                  <th>{t("Total")}</th>
+                  <th>{t("Payment")}</th>
+                  <th>{t("Shipment")}</th>
+                  <th>{t("Status")}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -68,17 +70,17 @@ export default function Orders() {
                     <td className="small">{o.productSummary}</td>
                     <td>{fmtMoney(o.total)}</td>
                     <td>
-                      <span className={`badge ${statusBadgeClass(o.paymentStatus)}`}>{o.paymentStatus}</span>
+                      <span className={`badge ${statusBadgeClass(o.paymentStatus)}`}>{t(o.paymentStatus)}</span>
                     </td>
                     <td>
-                      <span className={`badge ${statusBadgeClass(o.shipmentStatus)}`}>{o.shipmentStatus}</span>
+                      <span className={`badge ${statusBadgeClass(o.shipmentStatus)}`}>{t(o.shipmentStatus)}</span>
                     </td>
                     <td>
-                      <span className={`badge ${statusBadgeClass(o.status)}`}>{o.status}</span>
+                      <span className={`badge ${statusBadgeClass(o.status)}`}>{t(o.status)}</span>
                     </td>
                     <td>
                       <Link to={`/member/orders/${o.id}`} className="btn btn-outline btn-sm">
-                        View
+                        {t("View")}
                       </Link>
                     </td>
                   </tr>

@@ -422,7 +422,7 @@ describe('Marketplace overhaul regression coverage', () => {
     expect(sentRecipients.map((entry) => entry.recipient)).not.toContain(partnerEmail);
   });
 
-  it('does not approve waterworker or builder accounts without a configured ABR result', async () => {
+  it('allows the administrator to manually approve a waterworker account without a live ABR integration', async () => {
     const response = await request(app)
       .post('/api/applications')
       .send({
@@ -460,8 +460,8 @@ describe('Marketplace overhaul regression coverage', () => {
       .set('Authorization', `Bearer ${admin.token}`)
       .send({ action: 'APPROVE', role: 'WATERWORKER' });
 
-    expect(review.status).toBe(400);
-    expect(review.body.message).toContain('ABR');
+    expect(review.status).toBe(200);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: response.body.data.userId } })).accountStatus).toBe('ACTIVE');
   });
 
   it('stores dealer locations with map coordinates and active status', async () => {

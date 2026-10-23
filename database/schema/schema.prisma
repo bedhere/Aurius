@@ -39,6 +39,7 @@ enum UserRole {
 enum TradeType {
   LICENSED_PLUMPER
   LICENSED_ELECTRICIAN
+  BUILDER
   NOT_APPLICABLE // for trade channel (dealer/agent) users
 }
 

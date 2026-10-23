@@ -26,6 +26,8 @@ export const config = {
   jwtRefreshTtl: req('JWT_REFRESH_TTL', '7d'),
   aesKey: req('AES_KEY', ''),
   adminEmail: req('ADMIN_EMAIL', 'admin@aurius.com.au'),
+  // One common approved-account price until separate trade tiers are enabled.
+  tradePricingMode: req('TRADE_PRICING_MODE', 'uniform'),
   smtp: {
     host: req('SMTP_HOST'),
     port: parseInt(req('SMTP_PORT', '587'), 10),

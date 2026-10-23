@@ -1641,3 +1641,64 @@
     transition: none;
   }
 }
+
+/* Enquiries share the existing white, teal and stone design system. */
+.enquiry-layout { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(32px, 5vw, 72px); align-items: start; }
+.enquiry-layout > * { min-width: 0; }
+.enquiry-intro h2 { margin-top: 0; font-size: 23px; line-height: 1.4; }
+.enquiry-intro p, .partnership-intro p { font-size: 16px; line-height: 1.8; }
+.enquiry-intro a { overflow-wrap: anywhere; }
+.enquiry-form { width: 100%; }
+.enquiry-form > h3 { margin-top: 0; font-size: 23px; }
+.enquiry-form fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+.enquiry-form .field label, .enquiry-form legend { font-size: 15px; font-weight: 600; color: var(--ink-soft); }
+.enquiry-form .field input:not([type]), .enquiry-form .field input, .enquiry-form .field select, .enquiry-form .field textarea { font: inherit; }
+.enquiry-form .field input:not([type]) { width: 100%; min-height: 46px; padding: 10px 14px; border: 1.5px solid var(--stone-300); border-radius: var(--radius-sm); background: #fff; color: var(--ink); }
+.enquiry-form .field input:not([type]):focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(13, 161, 158, .12); }
+.enquiry-form fieldset.product-interests { margin-bottom: 20px; }
+.product-interests legend { margin-bottom: 12px; }
+.enquiry-form .product-interests .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-weight: 400; }
+.enquiry-form .field input[type='checkbox'] { width: 18px; min-height: 18px; height: 18px; margin: 0; }
+.enquiry-form .field-error { color: var(--danger); font-size: 14px; }
+.enquiry-success h2 { margin-top: 0; font-size: 25px; }
+.enquiry-success p { font-size: 16px; line-height: 1.8; }
+.contact-direction { margin-bottom: 30px; }
+.contact-direction h2 { margin-bottom: 8px; font-size: 21px; }
+.contact-direction p { margin-top: 0; }
+.contact-company { padding-top: 24px; border-top: 1px solid var(--stone-200); }
+.contact-company h2 { font-size: 18px; }
+.contact-company p { margin: 8px 0; }
+.partnership-intro { max-width: 860px; text-align: center; }
+.partnership-intro .btn { margin-top: 12px; }
+.partnership-benefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 48px; margin-top: 36px; }
+.partnership-benefits h3 { color: var(--brand-dark); font-size: 21px; margin: 0 0 10px; }
+.partnership-benefits p { margin: 0; font-size: 16px; line-height: 1.8; color: var(--ink-soft); }
+#partnership-application { scroll-margin-top: 24px; }
+.vision-body article + article { margin-top: 32px; }
+.vision-body h2 { font-size: 24px; line-height: 1.4; }
+
+/* Preserve the original product photographs and both warranty artworks. */
+.product-card .card__img { aspect-ratio: 1 / 1; background: #fff; }
+.product-card .card__img img { object-fit: contain; }
+.product-card__summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: start; min-height: 100px; }
+.product-card__identity { min-width: 0; }
+.product-card .card__title { margin-top: 10px; font-size: 19px; line-height: 1.45; overflow-wrap: anywhere; }
+.product-card__model { display: block; font-size: 14px; font-weight: 400; color: var(--muted); margin-top: 5px; }
+.product-card .card__desc { font-size: 15px; line-height: 1.65; min-height: 48px; }
+.product-card .card__foot { flex-wrap: wrap; }
+.product-warranty.product-warranty--compact { width: clamp(76px, 7.5vw, 114px); max-width: 100%; flex-shrink: 0; margin-top: 2px; }
+@media (max-width: 900px) {
+  .enquiry-layout { grid-template-columns: 1fr; gap: 32px; max-width: 760px; }
+}
+@media (max-width: 560px) {
+  .partnership-benefits { grid-template-columns: 1fr; gap: 28px; }
+  .enquiry-form .btn { width: 100%; white-space: normal; }
+  .enquiry-form .form-grid-2 { grid-template-columns: 1fr; }
+  .product-warranty.product-warranty--compact { width: 98px; }
+  .product-card .card__title { font-size: 18px; }
+}
+
+/* Narrow water cards keep series names and warranty artwork readable. */
+.water-product-grid .product-card__summary { grid-template-columns: 1fr; min-height: 154px; }
+.water-product-grid .product-warranty--compact { justify-self: end; width: 104px; margin-top: 0; }
+.water-product-grid .product-card .card__cat { letter-spacing: 1.1px; line-height: 1.6; }

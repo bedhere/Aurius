@@ -6,6 +6,8 @@ import { Alert, Pagination, PriceDisplay } from '../../components/ui';
 import { useI18n } from '../../i18n/LanguageContext';
 import { groupOverviewProducts, loadProductOverview, ProductPage } from '../../utils/product-catalogue';
 import { productThumbnail, usesRemoteOnlyPresentation } from '../../utils/product-media';
+import ProductWarrantyBadge from '../../components/ProductWarrantyBadge';
+import { productLabel } from '../../utils/product-label';
 import '../../assets/styles/pages-public.css';
 
 export default function Products() {
@@ -15,6 +17,7 @@ export default function Products() {
     ['toilet', t('products.smartToilet')],
     ['toilet-lid', t('products.toiletLid')],
     ['water', t('products.water')],
+    ['filter', t('products.filter')],
     ['drain', t('products.drain')],
   ] as const;
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,8 +38,12 @@ export default function Products() {
       'Toilet Lid': t('products.toiletLid'),
       water: t('products.water'),
       drain: t('products.drain'),
+      'Smart Toilet': t('products.smartToilet'),
+      'Whole-House Water Purification': t('products.water'),
+      'Filter Cartridge': t('products.filter'),
+      'Engineering Custom Floor Drain': t('products.drain'),
     };
-    return language === 'zh-CN' || value === 'Toilet Lid' ? labels[value] ?? value : value;
+    return labels[value] ?? value;
   };
 
   useEffect(() => {
@@ -99,24 +106,30 @@ export default function Products() {
     setSearchParams(next, { replace: true });
   };
 
-  const renderProductCard = (product: ProductItem) => (
-    <div className="card" key={product.id}>
+  const renderProductCard = (product: ProductItem) => {
+    const label = productLabel(product);
+    return (
+    <div className="card product-card" key={product.id}>
       <Link to={`/products/${product.id}`} className={`card__img${usesRemoteOnlyPresentation(product) ? ' card__img--remote' : ''}`}>
         <img src={productThumbnail(product)} alt={usesRemoteOnlyPresentation(product) ? `${product.name} — ${t('detail.remoteControl')}` : product.name} loading="lazy" />
       </Link>
       <div className="card__body">
-        <span className="card__cat">{categoryLabel(product.category)}</span>
-        <h3 className="card__title">{product.name}</h3>
-        {product.series && <span className="small muted">{product.series}</span>}
-        {product.model && <span className="small muted">{t('common.model')} {product.model}</span>}
-        <p className="card__desc">{product.description.slice(0, 110)}...</p>
+        <div className="product-card__summary">
+          <div className="product-card__identity">
+            <span className="card__cat">{categoryLabel(product.category)}</span>
+            <h3 className="card__title">{label.series}{label.model && <span className="product-card__model"> | {label.model}</span>}</h3>
+          </div>
+          <ProductWarrantyBadge category={product.category} compact />
+        </div>
+        <p className="card__desc">{product.description.slice(0, 110)}{product.description.length > 110 ? '…' : ''}</p>
         <div className="card__foot">
           <PriceDisplay price={product.price} prices={product.prices} rrp={product.rrp} priceNote={language === 'zh-CN' ? '联系 AURIUS 申请经销合作' : product.priceNote} stock={product.stock} />
           <Link to={`/products/${product.id}`} className="btn btn-outline btn-sm">{t('common.more')}</Link>
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <>
@@ -162,7 +175,7 @@ export default function Products() {
                 onClick={() => selectWaterFilter('all')}
                 aria-pressed={series === 'all' && waterSubcategory === 'all'}
               >
-                全部净水
+                {language === 'zh-CN' ? '全部净水' : 'All Water Filtration'}
               </button>
               <button
                 type="button"
@@ -170,7 +183,7 @@ export default function Products() {
                 onClick={() => selectWaterFilter('锐净')}
                 aria-pressed={series === '锐净'}
               >
-                锐净
+                {language === 'zh-CN' ? '锐净' : 'RAYCLEAN'}
               </button>
               <button
                 type="button"
@@ -178,7 +191,7 @@ export default function Products() {
                 onClick={() => selectWaterFilter('赛博')}
                 aria-pressed={series === '赛博'}
               >
-                赛博
+                {language === 'zh-CN' ? '赛博' : 'CYBER'}
               </button>
               <button
                 type="button"
@@ -186,7 +199,7 @@ export default function Products() {
                 onClick={() => selectWaterFilter('all', 'filter-core')}
                 aria-pressed={waterSubcategory === 'filter-core'}
               >
-                滤芯
+                {t('products.filter')}
               </button>
             </div>
           )}

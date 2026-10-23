@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
@@ -9,6 +10,7 @@ import { productThumbnail, usesRemoteOnlyPresentation } from '../../utils/produc
 import '../../assets/styles/pages-member.css';
 
 export default function CartPage() {
+  const { t } = useI18n();
   const [cart, setCart] = useState<Cart | null>(null);
   const [message, setMessage] = useState<{ type: 'error'; text: string } | null>(null);
 
@@ -41,14 +43,14 @@ export default function CartPage() {
 
   return (
     <>
-      <h2>My Cart</h2>
-      {message && <Alert type="error">{message.text}</Alert>}
+      <h2>{t("My Cart")}</h2>
+      {message && <Alert type="error">{t(message.text)}</Alert>}
 
       {cart.items.length === 0 ? (
         <div className="panel">
-          <p className="muted">Your cart is empty.</p>
+          <p className="muted">{t("Your cart is empty.")}</p>
           <Link to="/products" className="btn btn-primary">
-            Browse Products
+            {t("Browse Products")}
           </Link>
         </div>
       ) : (
@@ -60,11 +62,11 @@ export default function CartPage() {
                 <div>
                   <div>{i.name}</div>
                   <div className="small muted">
-                    {i.sku} · {fmtMoney(i.unitPrice)} each
+                    {i.sku} · {fmtMoney(i.unitPrice)} {t("each")}
                   </div>
                   {formatVariantSelection(i.variantName, i.variantAttributes) && (
                     <div className="cart-line__variant">
-                      Selected: {formatVariantSelection(i.variantName, i.variantAttributes)}
+                      {t("Selected:")} {formatVariantSelection(i.variantName, i.variantAttributes)}
                     </div>
                   )}
                 </div>
@@ -80,26 +82,26 @@ export default function CartPage() {
                 />
                 <div className="small">{fmtMoney(i.lineTotal)}</div>
                 <button className="btn btn-ghost btn-sm" onClick={() => remove(i.id)}>
-                  Remove
+                  {t("Remove")}
                 </button>
               </div>
             ))}
             <div className="flex items-center mt-2">
               <button className="btn btn-ghost btn-sm" onClick={clear}>
-                Clear cart
+                {t("Clear cart")}
               </button>
               <span className="spacer" />
               <div style={{ fontSize: 20, fontWeight: 700 }}>
-                Subtotal: <span className="price">{fmtMoney(cart.subtotal)}</span>
+                {t("Subtotal:")} <span className="price">{fmtMoney(cart.subtotal)}</span>
               </div>
             </div>
           </div>
           <div className="flex gap-2" style={{ justifyContent: 'flex-end' }}>
             <Link to="/products" className="btn btn-ghost">
-              Continue Shopping
+              {t("Continue Shopping")}
             </Link>
             <Link to="/member/checkout" className="btn btn-primary btn-lg">
-              Proceed to Checkout
+              {t("Proceed to Checkout")}
             </Link>
           </div>
         </>
