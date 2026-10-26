@@ -490,6 +490,7 @@ describe('Marketplace overhaul regression coverage', () => {
       data: [
         {
           name: 'Public Dealer',
+          authorised: true,
           address: '1 Main St',
           latitude: -33,
           longitude: 151,

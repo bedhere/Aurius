@@ -63,6 +63,16 @@ export const imageUpload = multer({
   fileFilter: fileFilter(ALLOWED_IMAGE_EXTENSIONS, ALLOWED_IMAGE_MIMES),
 });
 
+// Public resources are only served through the publication-aware API.
+export const resourceUpload = multer({
+  storage,
+  limits: { fileSize: 150 * 1024 * 1024 },
+  fileFilter: fileFilter(
+    new Set(['.pdf', '.jpg', '.jpeg', '.png', '.mp4', '.webm']),
+    new Set(['application/pdf', 'image/jpeg', 'image/png', 'video/mp4', 'video/webm']),
+  ),
+});
+
 export function uploadSub(sub: string) {
   return (req: express.Request, _res: express.Response, next: express.NextFunction): void => {
     (req as unknown as { uploadSub?: string }).uploadSub = sub;

@@ -103,6 +103,8 @@ export const ZH: Record<string, Record<string, string>> = {
     installations: '安装报备',
     referrals: '推荐销售',
     downloads: '下载专区',
+    resources: '产品公开资料',
+    enquiries: '咨询与售后',
     emailLogs: '邮件日志',
     auditLogs: '操作日志',
     securityLogs: '安全告警',

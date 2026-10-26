@@ -1,3 +1,4 @@
+import { config } from '../config';
 import { prisma } from '../lib/prisma';
 import { generateOrderNumber, roleToPriceLevel } from './sequenceService';
 import { getUnitPriceForLevel } from './priceService';
@@ -89,7 +90,8 @@ export function isEngineeringProduct(product: { category: string; displayStyle?:
 async function getGuestUnitPrice(productId: number): Promise<number> {
   const priceRow = await prisma.productPrice.findUnique({ where: { productId } });
   if (!priceRow) throw badRequest('No price configured for product');
-  const price = priceRow.promoPrice ?? priceRow.retailPrice ?? priceRow.level1Price;
+  const price = priceRow.promoPrice ?? priceRow.retailPrice ?? (config.tradePricingMode === 'role' ? null : priceRow.level1Price);
+  if (price === null) throw badRequest('Price available on enquiry. Please contact AURIUS.');
   return Math.round(price * 100) / 100;
 }
 

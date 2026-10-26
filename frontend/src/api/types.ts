@@ -106,6 +106,11 @@ export interface DealerLocation {
   photos: string[];
   note?: string | null;
   active: boolean;
+  authorised?: boolean;
+  partnerType?: string;
+  serviceArea?: string | null;
+  website?: string | null;
+  productCategories?: string | null;
 }
 
 export interface SiteContent {

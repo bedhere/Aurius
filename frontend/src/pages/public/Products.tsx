@@ -123,7 +123,7 @@ export default function Products() {
         </div>
         <p className="card__desc">{product.description.slice(0, 110)}{product.description.length > 110 ? '…' : ''}</p>
         <div className="card__foot">
-          <PriceDisplay price={product.price} prices={product.prices} rrp={product.rrp} priceNote={language === 'zh-CN' ? '联系 AURIUS 申请经销合作' : product.priceNote} stock={product.stock} />
+          <PriceDisplay price={product.price} prices={product.prices} rrp={product.rrp} priceNote={product.priceNote} stock={product.stock} />
           <Link to={`/products/${product.id}`} className="btn btn-outline btn-sm">{t('common.more')}</Link>
         </div>
       </div>

@@ -1252,3 +1252,10 @@ table.data-table {
   .pdf-header__actions .pdf-header__icon { display: none; }
   .pdf-header .main-nav { padding-inline: 20px; }
 }
+
+/* Brand footer without blanket certification claims. */
+.footer-brand-strip { display: flex; gap: 24px; align-items: center; padding: 24px 30px; background: var(--brand-tint); border-top: 1px solid var(--stone-200); color: var(--ink-soft); }
+.footer-brand-strip strong { color: var(--brand-dark); font-size: 23px; letter-spacing: 3px; font-weight: 500; }
+.footer-brand-strip p { margin: 0; font-size: 16px; }
+.footer-brand-strip > a { margin-left: auto; font-size: 14px; white-space: nowrap; }
+@media (max-width: 600px) { .footer-brand-strip { flex-direction: column; align-items: flex-start; padding: 22px; gap: 12px; } .footer-brand-strip > a { margin-left: 0; } }

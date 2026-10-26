@@ -1,14 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { AppError, ok } from '../lib/response';
-import { sendMail } from '../services/mailService';
+import { ok } from '../lib/response';
 import { config } from '../config';
 import { listPublicDealerLocations } from '../controllers/dealerLocationController';
-import { validate, validated } from '../middleware/validate';
+import { validate } from '../middleware/validate';
 import { contactEnquirySchema, partnershipEnquirySchema } from '../validators/enquiry.schema';
-import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { publicCompanyInfo } from '../lib/companyInfo';
+import { contactEnquiry, partnershipEnquiry, supportEnquiry } from '../controllers/websiteEnquiryController';
+import { listPublicResources, publicResourceFile } from '../controllers/supportResourceController';
+import { docUpload, uploadSub } from '../middleware/upload';
 
 function parseSetting<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
@@ -35,34 +36,20 @@ router.get('/config', (_req: Request, res: Response) => {
 });
 
 const enquiryLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false,
+  windowMs: 15 * 60 * 1000, max: config.env === 'test' ? 1000 : 10, standardHeaders: true, legacyHeaders: false,
   message: { success: false, message: 'Too many enquiries. Please try again later or email info@aurius.com.au.', errors: [] },
 });
 
-/** Public enquiries use the existing SMTP transport and the official inbox. */
-router.post('/contact', enquiryLimiter, validate(contactEnquirySchema), async (req: Request, res: Response, next) => {
+router.post('/contact', enquiryLimiter, validate(contactEnquirySchema), contactEnquiry);
+router.post('/partnership-enquiries', enquiryLimiter, validate(partnershipEnquirySchema), partnershipEnquiry);
+router.post('/support/requests', enquiryLimiter, uploadSub('support'), docUpload.fields([{ name: 'images', maxCount: 4 }, { name: 'proof', maxCount: 1 }]), supportEnquiry);
+router.get('/support/resources', listPublicResources);
+router.get('/support/resources/:id/file', publicResourceFile);
+router.get('/vision-media', async (_req, res, next) => {
   try {
-    const body = validated<z.infer<typeof contactEnquirySchema>>(req);
-    const sent = await sendMail({
-      to: 'info@aurius.com.au', replyTo: body.email, template: 'CONTACT_ENQUIRY', data: body,
-    });
-    if (!sent) throw new AppError(503, 'We could not send your enquiry. Please try again or email info@aurius.com.au.');
-    ok(res, null, 'Your enquiry has been received. Our team will respond as soon as possible.');
-  } catch (err) {
-    next(err);
-  }
-});
-
-/** Recruitment only: never creates a user, application account or ordering access. */
-router.post('/partnership-enquiries', enquiryLimiter, validate(partnershipEnquirySchema), async (req: Request, res: Response, next) => {
-  try {
-    const body = validated<z.infer<typeof partnershipEnquirySchema>>(req);
-    const sent = await sendMail({
-      to: 'info@aurius.com.au', replyTo: body.email, template: 'PARTNERSHIP_ENQUIRY',
-      data: { ...body, interestedProducts: body.interestedProducts.join(', ') },
-    });
-    if (!sent) throw new AppError(503, 'We could not send your enquiry. Please try again or email info@aurius.com.au.');
-    ok(res, null, 'Your partnership enquiry has been received. Our team will review your details and contact you.');
+    const setting = await prisma.systemSetting.findUnique({ where: { key: 'VISION_MEDIA' } });
+    const media = parseSetting<{ src?: string; alt?: string } | null>(setting?.value, null);
+    ok(res, media?.src?.startsWith('/uploads/brand/') ? media : null);
   } catch (err) { next(err); }
 });
 

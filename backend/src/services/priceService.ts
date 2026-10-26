@@ -2,6 +2,7 @@ import { prisma } from '../lib/prisma';
 import { AccountStatus, UserRole } from '@prisma/client';
 import { roleToPriceLevel } from './sequenceService';
 import { logSecurityEvent, checkPriceBurst } from './securityService';
+import { badRequest } from '../lib/response';
 import { config } from '../config';
 
 // ---------------------------------------------------------------------------
@@ -11,7 +12,7 @@ import { config } from '../config';
 
 export interface PriceResult {
   visible: boolean;
-  reason: 'NOT_LOGGED_IN' | 'UNDER_REVIEW' | 'NO_PERMISSION' | 'OK';
+  reason: 'NOT_LOGGED_IN' | 'UNDER_REVIEW' | 'NO_PERMISSION' | 'UNCONFIGURED' | 'OK';
   price?: number;
   currency?: string;
   level?: number;
@@ -44,9 +45,9 @@ export function visiblePriceKeyForRole(role: UserRole | null | undefined): Visib
     case 'REGIONAL_AGENT':
       return 'dealer1Price';
     case 'LICENSED_TRADESMAN':
-      return 'level2Price';
+      return config.tradePricingMode === 'role' ? 'waterworkerPrice' : 'level2Price';
     case 'SUB_DEALER':
-      return 'level3Price';
+      return 'distributor2Price';
     case 'WATERWORKER':
       return 'waterworkerPrice';
     case 'BUILDER':
@@ -71,15 +72,15 @@ function memberPriceForRole(row: {
   }
   switch (role) {
     case 'REGIONAL_AGENT':
-      return { value: row.dealer1Price ?? row.level1Price, label: 'Dealer price', level: 1 };
+      return { value: config.tradePricingMode === 'role' ? row.dealer1Price : row.dealer1Price ?? row.level1Price, label: config.tradePricingMode === 'role' ? 'Regional distributor price' : 'Dealer price', level: 1 };
     case 'LICENSED_TRADESMAN':
-      return { value: row.level2Price, label: 'VIP price', level: 2 };
+      return { value: config.tradePricingMode === 'role' ? row.waterworkerPrice : row.level2Price, label: config.tradePricingMode === 'role' ? 'Plumber price' : 'VIP price', level: 2 };
     case 'SUB_DEALER':
-      return { value: row.distributor2Price ?? row.level3Price, label: 'Sub-dealer price', level: 3 };
+      return { value: config.tradePricingMode === 'role' ? row.distributor2Price : row.distributor2Price ?? row.level3Price, label: config.tradePricingMode === 'role' ? 'Dealer price' : 'Sub-dealer price', level: 3 };
     case 'WATERWORKER':
-      return { value: row.waterworkerPrice ?? row.level2Price, label: 'Waterworker price', level: 4 };
+      return { value: config.tradePricingMode === 'role' ? row.waterworkerPrice : row.waterworkerPrice ?? row.level2Price, label: config.tradePricingMode === 'role' ? 'Plumber price' : 'Waterworker price', level: 4 };
     case 'BUILDER':
-      return { value: row.builderPrice ?? row.level3Price, label: 'Builder price', level: 5 };
+      return { value: config.tradePricingMode === 'role' ? row.builderPrice : row.builderPrice ?? row.level3Price, label: 'Builder price', level: 5 };
     default:
       return { value: null, label: '', level: 0 };
   }
@@ -106,10 +107,12 @@ export async function getPriceForProduct(
   if (!priceRow) return { visible: false, reason: 'NO_PERMISSION' };
 
   if (!user) {
+    const retail = priceRow.promoPrice ?? priceRow.retailPrice ?? (config.tradePricingMode === 'role' ? null : priceRow.level1Price);
+    if (retail === null) return { visible: false, reason: 'UNCONFIGURED' };
     return {
       visible: true,
       reason: 'OK',
-      price: priceRow.promoPrice ?? priceRow.retailPrice ?? priceRow.level1Price,
+      price: retail,
       currency: priceRow.currency,
       level: 0,
     };
@@ -131,27 +134,17 @@ export async function getPriceForProduct(
     await checkPriceBurst(requesterUserId);
   }
 
-  const price = config.tradePricingMode === 'uniform' ? priceRow.level2Price :
-    vis.level === 1 ? (priceRow.dealer1Price ?? priceRow.level1Price) :
-    vis.level === 2 ? priceRow.level2Price :
-    vis.level === 3 ? (priceRow.distributor2Price ?? priceRow.level3Price) :
-    vis.level === 4 ? (priceRow.waterworkerPrice ?? priceRow.level2Price) :
-    vis.level === 5 ? (priceRow.builderPrice ?? priceRow.level3Price) :
-    priceRow.level3Price;
+  const price = memberPriceForRole(priceRow, user.role).value;
+  if (price === null) return { visible: false, reason: 'UNCONFIGURED' };
   return { visible: true, reason: 'OK', price, currency: priceRow.currency, level: vis.level };
 }
 
 export async function getUnitPriceForLevel(productId: number, level: number): Promise<number> {
   const priceRow = await prisma.productPrice.findUnique({ where: { productId } });
   if (!priceRow) throw new Error('No price configured for product');
-  const price = config.tradePricingMode === 'uniform' ? priceRow.level2Price :
-    level === 1 ? (priceRow.dealer1Price ?? priceRow.level1Price) :
-    level === 2 ? priceRow.level2Price :
-    level === 3 ? (priceRow.distributor2Price ?? priceRow.level3Price) :
-    level === 4 ? (priceRow.waterworkerPrice ?? priceRow.level2Price) :
-    level === 5 ? (priceRow.builderPrice ?? priceRow.level3Price) :
-    priceRow.level3Price;
-  if (price === null || price === undefined) throw new Error('Price level not configured');
+  const roles: Record<number, UserRole> = { 1: 'REGIONAL_AGENT', 2: 'LICENSED_TRADESMAN', 3: 'SUB_DEALER', 4: 'WATERWORKER', 5: 'BUILDER' };
+  const price = memberPriceForRole(priceRow, roles[level]).value;
+  if (price === null || price === undefined) throw badRequest('Price available on enquiry. Please contact AURIUS.');
   return price;
 }
 

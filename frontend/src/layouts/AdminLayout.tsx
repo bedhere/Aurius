@@ -15,6 +15,8 @@ const MENU: { key: string; to: string; end?: boolean }[] = [
   { key: 'performance', to: '/admin/performance' },
   { key: 'installations', to: '/admin/installations' },
   { key: 'referrals', to: '/admin/referrals' },
+  { key: 'resources', to: '/admin/resources' },
+  { key: 'enquiries', to: '/admin/enquiries' },
   { key: 'downloads', to: '/admin/downloads' },
   { key: 'emailLogs', to: '/admin/email-logs' },
   { key: 'auditLogs', to: '/admin/audit-logs' },

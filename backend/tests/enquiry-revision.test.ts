@@ -9,6 +9,7 @@ import { channelForRole } from '../src/services/memberService';
 import { publicCompanyInfo } from '../src/lib/companyInfo';
 
 const partnership = {
+  abn: '51824753556', partnershipType: 'Regional Distributor',
   companyName: 'Revision Test Business', state: 'NSW', city: 'Sydney',
   businessOverview: 'Bathroom showroom selling toilets and filtration systems.',
   interestedProducts: ['Smart Toilets', 'Whole House Water Filtration'],
@@ -48,12 +49,13 @@ describe('Website enquiry and approved account revision', () => {
     expect(await prisma.emailLog.count({ where: { template: 'PARTNERSHIP_ENQUIRY' } })).toBe(before);
   });
 
-  it('reports delivery failure instead of confirming receipt', async () => {
+  it('preserves a received enquiry and exposes notification failure when SMTP fails', async () => {
     const send = vi.spyOn(mailService, 'sendMail').mockResolvedValueOnce(false);
     try {
       const response = await request(app).post('/api/partnership-enquiries').send(partnership);
-      expect(response.status).toBe(503);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(200);
+      const record = await prisma.websiteEnquiry.findUniqueOrThrow({ where: { reference: response.body.data.reference } });
+      expect(record.notificationSent).toBe(false);
       expect(send).toHaveBeenCalledWith(expect.objectContaining({ to: 'info@aurius.com.au', replyTo: partnership.email }));
     } finally { send.mockRestore(); }
   });

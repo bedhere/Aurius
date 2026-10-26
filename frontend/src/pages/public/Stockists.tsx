@@ -9,7 +9,7 @@ import { stateLabel } from '../../utils/format';
 import '../../assets/styles/pages-public.css';
 
 export default function Stockists() {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [dealers, setDealers] = useState<DealerLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -38,8 +38,8 @@ export default function Stockists() {
     <>
       <section className="page-band page-band--dense">
         <div className="container">
-          <h1 className="section-title">{selectedGroup ? stateTitle(selectedGroup.state) : t('stockists.title')}</h1>
-          <p className="section-sub">{t(selectedState ? 'stockists.stateSub' : 'stockists.sub')}</p>
+          <h1 className="section-title">{selectedGroup ? (language === 'zh-CN' ? `${stateTitle(selectedGroup.state)}授权网点` : `${stateTitle(selectedGroup.state).replace(' (Canberra)', '')} Stockists`) : t('stockists.title')}</h1>
+          <p className="section-sub">{selectedGroup && !selectedGroup.dealers.length ? (language === 'zh-CN' ? `AURIUS 正在${stateTitle(selectedGroup.state)}逐步建立授权销售网络。如需了解产品供应情况或当地销售服务，请联系 AURIUS。` : `Our authorised stockist network in ${stateTitle(selectedGroup.state).replace(' (Canberra)', '')} is currently being developed. For product availability and local enquiries, please contact AURIUS.`) : t(selectedState ? 'stockists.stateSub' : 'stockists.sub')}</p>
         </div>
       </section>
       <section className="section stockists-recruitment" aria-label={t('stockists.regions')}>
@@ -102,8 +102,8 @@ function StateDealerView({ state, dealers, title }: { state: string; dealers: De
     <div className="stockist-state-card stockists-state-vacancy">
       <span className="stockist-state-card__status">{t('stockists.recruiting')}</span>
       <h2>{t('stockists.vacancy')}</h2>
-      <p>{t('stockists.invitation')}</p>
-      <Link to="/trade" className="btn btn-outline btn-sm" aria-label={`${t('stockists.apply')} — ${title}`}>{t('stockists.apply')}</Link>
+      <p>{t("For product availability and local enquiries, please contact AURIUS.")}</p>
+      <Link to="/contact" className="btn btn-outline btn-sm" aria-label={`${t('Contact AURIUS')} — ${title}`}>{t('Contact AURIUS')}</Link>
     </div>
   );
 
@@ -151,6 +151,9 @@ function DealerDetails({ dealer }: { dealer: DealerLocation }) {
           {dealer.phone && <a href={`tel:${dealer.phone.replace(/[^\d+]/g, '')}`}>{dealer.phone}</a>}
           <span>{[dealer.address, dealer.city, dealer.state].filter(Boolean).join(', ')}</span>
         </address>
+        {dealer.serviceArea && <p><strong>{t('Service area')}: </strong>{dealer.serviceArea}</p>}
+        {dealer.productCategories && <p><strong>{t('Product categories')}: </strong>{dealer.productCategories}</p>}
+        {dealer.website && <p><a href={dealer.website} target="_blank" rel="noopener noreferrer">{t('Company website')}</a></p>}
         {dealer.note && <p>{dealer.note}</p>}
         {mapSrc ? (
           <iframe className="stockist-dealer-map" title={`${dealer.name} — ${t('stockists.map')}`} src={mapSrc} loading="lazy" referrerPolicy="no-referrer" />

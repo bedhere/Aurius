@@ -5,7 +5,7 @@ export const partnerStates = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT
 export function groupDealerLocations(locations: DealerLocation[]) {
   const groups: { state: string; dealers: DealerLocation[] }[] = partnerStates.map((state) => ({ state, dealers: [] }));
   for (const dealer of locations) {
-    if (!dealer.active) continue;
+    if (!dealer.active || dealer.authorised === false || dealer.partnerType === 'DEALER') continue;
     const state = dealer.state?.trim().toUpperCase() || 'other';
     let group = groups.find((entry) => entry.state === state);
     if (!group) {

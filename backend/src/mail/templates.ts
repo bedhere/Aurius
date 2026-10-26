@@ -61,15 +61,28 @@ const money = (v: unknown): string =>
 
 export const templates: Record<string, TemplateFn> = {
   CONTACT_ENQUIRY: enquiryTemplate('New Customer Enquiry', [
-    ['Full Name', 'name'], ['Company Name', 'companyName'], ['Email Address', 'email'],
+    ['Reference', 'reference'], ['Full Name', 'name'], ['Company Name', 'companyName'], ['Email Address', 'email'],
     ['Phone Number', 'phone'], ['State / Territory', 'state'], ['Enquiry Type', 'enquiryType'], ['Message', 'message'],
   ]),
   PARTNERSHIP_ENQUIRY: enquiryTemplate('New Partnership Enquiry', [
-    ['Company Name', 'companyName'], ['State / Territory', 'state'], ['City', 'city'],
+    ['Reference', 'reference'], ['Company Name', 'companyName'], ['Company ABN', 'abn'], ['Years in Business', 'yearsInBusiness'],
+    ['Existing Sales Network', 'existingSalesNetwork'], ['Preferred Partnership Type', 'partnershipType'],
+    ['Current Annual Sales Volume', 'currentAnnualSales'], ['State / Territory', 'state'], ['City', 'city'],
     ['Current Product Categories & Business Overview', 'businessOverview'], ['Products of Interest', 'interestedProducts'],
     ['Preferred Trading Territory', 'intendedTerritory'], ['Estimated Annual Sales Volume', 'expectedAnnualSales'],
     ['Contact Name', 'contactName'], ['Mobile Number', 'phone'], ['Company Website', 'website'], ['Company Email', 'email'],
   ]),
+  SUPPORT_ENQUIRY: enquiryTemplate('New After-Sales Request', [
+    ['Reference', 'reference'], ['Customer Name', 'name'], ['Email', 'email'], ['Phone', 'phone'],
+    ['Product Model', 'productModel'], ['Purchase Date', 'purchaseDate'], ['Order Number', 'orderNumber'], ['Fault Description', 'message'],
+  ]),
+  ENQUIRY_CONFIRMATION: (data) => {
+    const title = data.kind === 'SUPPORT' ? 'Your AURIUS Support Request' : data.kind === 'PARTNERSHIP' ? 'Your AURIUS Partnership Enquiry' : 'Thank You for Contacting AURIUS';
+    const message = 'Your enquiry has been received. Our team will review your message and respond as soon as possible.';
+    const approval = data.kind === 'PARTNERSHIP' ? 'Submission of an enquiry does not constitute appointment as an authorised AURIUS partner. All partnerships are subject to review and formal approval.' : '';
+    return { subject: title, text: `${message}\nReference: ${data.reference}\n${approval}`,
+      html: layout(title, p(message) + kv('Reference', escapeHtml(String(data.reference))) + (approval ? p(approval) : '')) };
+  },
   REGISTRATION_SUBMITTED: (d) => ({
     subject: 'Your AURIUS application has been received',
     text: `Hi ${d.firstName},\n\nThank you for submitting your ${d.channel} application to AURIUS (${d.applicationNo}).\nOur team will review your qualifications shortly.\n\nYou can track the status in your account.\n\nAURIUS Team`,

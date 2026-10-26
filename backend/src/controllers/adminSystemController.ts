@@ -11,7 +11,7 @@ function ipOf(req: Request): string {
 
 // --- Settings ---------------------------------------------------------------
 
-const SETTING_KEYS = ['BANK_ACCOUNT', 'SHIPPING_METHODS', 'COMPANY_CONTACT', 'HOMEPAGE_MEDIA', 'DEALER_LOCATIONS'];
+const SETTING_KEYS = ['BANK_ACCOUNT', 'SHIPPING_METHODS', 'COMPANY_CONTACT', 'HOMEPAGE_MEDIA', 'DEALER_LOCATIONS', 'VISION_MEDIA'];
 
 export async function uploadHomepageImage(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {

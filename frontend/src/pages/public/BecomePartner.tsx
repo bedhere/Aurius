@@ -8,7 +8,7 @@ import '../../assets/styles/pages-public.css';
 
 const PRODUCT_CATEGORIES = ['Smart Toilets', 'Smart Toilet Seats', 'Whole House Water Filtration', 'Filter Cartridges', 'Custom Floor Drains'];
 const INITIAL_FORM = {
-  companyName: '', state: '', city: '', businessOverview: '', interestedProducts: [] as string[],
+  companyName: '', abn: '', yearsInBusiness: '', existingSalesNetwork: '', partnershipType: '', currentAnnualSales: '', state: '', city: '', businessOverview: '', interestedProducts: [] as string[],
   intendedTerritory: '', expectedAnnualSales: '', contactName: '', phone: '', website: '', email: '',
 };
 const BENEFITS = [
@@ -73,6 +73,11 @@ export default function BecomePartner() {
         <fieldset disabled={busy}>
           <div className="field"><label htmlFor="partner-company">{t("Company Name *")}</label><input id="partner-company" autoComplete="organization" maxLength={200} value={form.companyName} onChange={set('companyName')} required /></div>
           <div className="form-grid-2">
+            <div className="field"><label htmlFor="partner-abn">{t("Company ABN *")}</label><input id="partner-abn" inputMode="numeric" pattern="[0-9]{11}" minLength={11} maxLength={11} title={t("ABN must be exactly 11 digits")} value={form.abn} onChange={set('abn')} required /></div>
+            <div className="field"><label htmlFor="partner-years">{t("Years in Business (Optional)")}</label><input id="partner-years" type="number" min="0" max="999" step="1" value={form.yearsInBusiness} onChange={set('yearsInBusiness')} /></div>
+          </div>
+          <div className="field"><label htmlFor="partner-type">{t("Preferred Partnership Type *")}</label><select id="partner-type" value={form.partnershipType} onChange={set('partnershipType')} required><option value="">{t("Select partnership type")}</option>{['Regional Distributor', 'Dealer / Reseller', 'Other Business Partnership'].map((value) => <option value={value} key={value}>{t(value)}</option>)}</select></div>
+          <div className="form-grid-2">
             <div className="field"><label htmlFor="partner-state">{t("State / Territory *")}</label><select id="partner-state" autoComplete="address-level1" value={form.state} onChange={set('state')} required><option value="">{t("Select state / territory")}</option>{AU_STATES.map((state) => <option key={state} value={state}>{t(`stockists.state.${state}`)} ({state})</option>)}</select></div>
             <div className="field"><label htmlFor="partner-city">{t("City *")}</label><input id="partner-city" autoComplete="address-level2" maxLength={100} value={form.city} onChange={set('city')} required /></div>
           </div>
@@ -86,7 +91,9 @@ export default function BecomePartner() {
             {productError && <p className="field-error" id="partner-products-error" role="alert">{t("Select at least one product category.")}</p>}
           </fieldset>
           <div className="field"><label htmlFor="partner-territory">{t("Preferred Trading Territory *")}</label><input id="partner-territory" maxLength={500} placeholder={t("State, city or region you would like to serve")} value={form.intendedTerritory} onChange={set('intendedTerritory')} required /></div>
-          <div className="field"><label htmlFor="partner-sales">{t("Estimated Annual Sales Volume *")}</label><textarea id="partner-sales" rows={2} maxLength={1000} placeholder={t("Estimated units per year; please specify the product category for each estimate.")} value={form.expectedAnnualSales} onChange={set('expectedAnnualSales')} required /></div>
+          <div className="field"><label htmlFor="partner-network">{t("Existing Sales Network (Optional)")}</label><textarea id="partner-network" rows={3} maxLength={2000} placeholder={t("Describe your stores, dealers, and relationships with plumbers and builders, including approximate numbers.")} value={form.existingSalesNetwork} onChange={set('existingSalesNetwork')} /></div>
+          <div className="field"><label htmlFor="partner-current-sales">{t("Current Annual Sales Volume (Optional)")}</label><textarea id="partner-current-sales" rows={2} maxLength={1000} placeholder={t("Current units sold per year, by product category. Approximate figures are welcome.")} value={form.currentAnnualSales} onChange={set('currentAnnualSales')} /></div>
+          <div className="field"><label htmlFor="partner-sales">{t("Estimated Annual Sales Volume (Optional)")}</label><textarea id="partner-sales" rows={2} maxLength={1000} placeholder={t("Estimated units per year; please specify the product category for each estimate.")} value={form.expectedAnnualSales} onChange={set('expectedAnnualSales')} /></div>
           <div className="form-grid-2">
             <div className="field"><label htmlFor="partner-name">{t("Contact Name *")}</label><input id="partner-name" autoComplete="name" maxLength={200} value={form.contactName} onChange={set('contactName')} required /></div>
             <div className="field"><label htmlFor="partner-phone">{t("Mobile Number *")}</label><input id="partner-phone" type="tel" autoComplete="tel" minLength={6} maxLength={30} value={form.phone} onChange={set('phone')} required /></div>
@@ -94,6 +101,7 @@ export default function BecomePartner() {
           <div className="field"><label htmlFor="partner-website">{t("Company Website (Optional)")}</label><input id="partner-website" type="text" inputMode="url" autoComplete="url" placeholder="www.example.com.au" maxLength={300} value={form.website} onChange={set('website')} /></div>
           <div className="field"><label htmlFor="partner-email">{t("Company Email *")}</label><input id="partner-email" type="email" autoComplete="email" maxLength={254} value={form.email} onChange={set('email')} required /></div>
           <p className="muted small">{t("Your details will be used to respond to your enquiry in accordance with our")} <Link to="/privacy-policy">{t("Privacy Policy")}</Link>.</p>
+          <p className="application-disclaimer">{t("Submission of an enquiry does not constitute appointment as an authorised AURIUS partner. All partnerships are subject to review and formal approval.")}</p>
           <button type="submit" className="btn btn-primary btn-lg">{busy ? t("Sending Enquiry…") : t("Submit Partnership Enquiry")}</button>
         </fieldset>
       </form>}

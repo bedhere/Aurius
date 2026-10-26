@@ -318,6 +318,7 @@ export async function adminPermanentlyDeleteProduct(req: Request, res: Response,
 async function updatePriceLevels(productId: number, body: Record<string, unknown>, adminId: number, ip?: string): Promise<void> {
   const existing = await prisma.productPrice.findUnique({ where: { productId } });
   const updates: Record<string, number> = {};
+  const nullableUpdates: Record<string, number | null> = {};
   const fieldMap: Record<string, string> = { level1Price: 'level1Price', level2Price: 'level2Price', level3Price: 'level3Price' };
   const extraFieldMap: Record<string, string> = {
     retailPrice: 'retailPrice',
@@ -331,14 +332,16 @@ async function updatePriceLevels(productId: number, body: Record<string, unknown
     if (body[key] !== undefined) updates[field] = Number(body[key]);
   }
   for (const [key, field] of Object.entries(extraFieldMap)) {
-    if (body[key] !== undefined && body[key] !== null) updates[field] = Number(body[key]);
+    if (body[key] !== undefined) nullableUpdates[field] = body[key] === null ? null : Number(body[key]);
   }
-  if (Object.keys(updates).length === 0 && body.rrp === undefined) return;
+  const allUpdates = { ...updates, ...nullableUpdates };
+  if (Object.values(allUpdates).some((value) => value !== null && (!Number.isFinite(value) || value < 0))) throw badRequest('Prices must be valid non-negative amounts');
+  if (Object.keys(allUpdates).length === 0 && body.rrp === undefined) return;
 
   if (existing) {
-    for (const [field, newValue] of Object.entries(updates)) {
+    for (const [field, newValue] of Object.entries(allUpdates)) {
       const oldValue = (existing as unknown as Record<string, number>)[field];
-      if (oldValue !== newValue) {
+      if (oldValue !== newValue && typeof oldValue === 'number' && typeof newValue === 'number') {
         await prisma.priceChangeLog.create({
           data: {
             productId,
@@ -354,7 +357,7 @@ async function updatePriceLevels(productId: number, body: Record<string, unknown
     }
       await prisma.productPrice.update({
       where: { productId },
-      data: { ...updates, ...(body.rrp !== undefined ? { rrp: Number(body.rrp) } : {}) },
+      data: { ...allUpdates, ...(body.rrp !== undefined ? { rrp: body.rrp === null ? null : Number(body.rrp) } : {}) },
     });
   } else {
     await prisma.productPrice.create({
@@ -369,7 +372,7 @@ async function updatePriceLevels(productId: number, body: Record<string, unknown
         level1Price: updates.level1Price ?? 0,
         level2Price: updates.level2Price ?? 0,
         level3Price: updates.level3Price ?? 0,
-        rrp: body.rrp !== undefined ? Number(body.rrp) : null,
+        rrp: body.rrp != null ? Number(body.rrp) : null,
       },
     });
   }
@@ -378,7 +381,7 @@ async function updatePriceLevels(productId: number, body: Record<string, unknown
     action: 'PRICE_CHANGED',
     targetType: 'Product',
     targetId: String(productId),
-    details: updates,
+    details: allUpdates,
     ip,
   });
 }

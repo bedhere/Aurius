@@ -284,6 +284,15 @@ export default function Portal({ channel, application = false }: { channel: Chan
           </p>
         </div>
 
+        <div className="portal-account-types" aria-label={t("Account types")}>
+          {(isVIP ? [
+            ['Plumber Account', 'Product pricing and purchasing access for approved plumbers.'],
+            ['Builder Account', 'Product pricing and purchasing access for approved builders.'],
+          ] : [
+            ['Authorised Regional Distributor', 'Regional distribution information and account-specific purchasing access.'],
+            ['Authorised Dealer', 'Dealer information and account-specific purchasing access.'],
+          ]).map(([title, description]) => <article key={title}><h2>{t(title)}</h2><p>{t(description)}</p></article>)}
+        </div>
         {tab === 'register' && <p className="center"><Link to={portalPath}>{t("Back to Account Login")}</Link></p>}
 
         {error && <Alert type="error">{error}</Alert>}
@@ -308,7 +317,7 @@ export default function Portal({ channel, application = false }: { channel: Chan
             </div>
             <div className="auth-sep">{t("— or —")}</div>
             <Link className="btn btn-outline" style={{ width: '100%' }} to={`${portalPath}/apply`}>{t("Apply for a Trade Account")}</Link>
-            <p className="auth-approval-note">{isVIP ? t("Account approval is required to access trade pricing and online ordering.") : t("Trade accounts are subject to approval by AURIUS. Access to partner pricing and online ordering is available only to approved account holders.")}</p>
+            <p className="auth-approval-note">{isVIP ? t("Account approval is required to access trade pricing and online ordering.") : t("Trade accounts are subject to approval by AURIUS. Pricing and ordering access are available only to authorised partners.")}</p>
           </form>
         ) : (
           <div className="form-card">
@@ -327,8 +336,8 @@ export default function Portal({ channel, application = false }: { channel: Chan
                   <div className="field">
                     <label htmlFor="partnership-type">{t("Partnership Type")} <span className="req">*</span></label>
                     <select id="partnership-type" value={reg.partnershipType} onChange={set('partnershipType')}>
-                      <option value="REGIONAL_DISTRIBUTOR">{t("Primary Dealer / Regional Distributor")}</option>
-                      <option value="DEALER">{t("Distributor / Channel Partner")}</option>
+                      <option value="REGIONAL_DISTRIBUTOR">{t("Authorised Regional Distributor")}</option>
+                      <option value="DEALER">{t("Authorised Dealer")}</option>
                     </select>
                   </div>
                   {isRegional && <div className="field">

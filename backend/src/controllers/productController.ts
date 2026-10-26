@@ -129,7 +129,9 @@ export async function listProducts(req: Request, res: Response, next: NextFuncti
           prices,
           priceNote: price.visible
             ? null
-            : price.reason === 'NOT_LOGGED_IN'
+            : price.reason === 'UNCONFIGURED'
+              ? 'Price available on enquiry. Please contact AURIUS.'
+              : price.reason === 'NOT_LOGGED_IN'
               ? 'Contact Aurius to apply for trade access.'
               : 'Your application is under review.',
         };
@@ -194,7 +196,9 @@ export async function getProduct(req: Request, res: Response, next: NextFunction
       prices,
       priceNote: price.visible
         ? null
-        : price.reason === 'NOT_LOGGED_IN'
+        : price.reason === 'UNCONFIGURED'
+              ? 'Price available on enquiry. Please contact AURIUS.'
+              : price.reason === 'NOT_LOGGED_IN'
           ? 'Contact Aurius to apply for trade access.'
           : 'Your application is under review.',
     });

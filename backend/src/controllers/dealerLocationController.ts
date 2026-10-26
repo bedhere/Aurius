@@ -43,7 +43,7 @@ function locationId(req: Request): number {
 export async function listPublicDealerLocations(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const locations = await prisma.dealerLocation.findMany({
-      where: { active: true },
+      where: { active: true, authorised: true, partnerType: 'REGIONAL_DISTRIBUTOR' },
       orderBy: [{ state: 'asc' }, { name: 'asc' }],
     });
     ok(res, locations.map(serializeLocation));

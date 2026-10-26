@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="pdf-footer">
       <div className="container pdf-footer__quality">
-        <img src="/uploads/brand/quality-strip.png" alt={t('footer.quality')} />
+        <div className="footer-brand-strip"><strong>AURIUS</strong><p>{t('Refined design. Intelligent comfort.')}</p><Link to="/support#product-resources">{t('Product Resources')}</Link></div>
       </div>
       <div className="container pdf-footer__meta">
         <span>{t('footer.rights')}</span>

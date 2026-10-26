@@ -879,8 +879,53 @@ model DealerLocation {
   photos    String   @default("[]")
   note      String?
   active    Boolean  @default(true)
+  authorised Boolean @default(false)
+  partnerType String @default("REGIONAL_DISTRIBUTOR")
+  serviceArea String?
+  website String?
+  productCategories String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Public product resources remain drafts until real material is supplied.
+// Separate from the protected member download centre.
+model SupportResource {
+  id Int @id @default(autoincrement())
+  title String
+  category String
+  description String @default("")
+  productId Int?
+  certificateNumber String @default("")
+  certificationScope String @default("")
+  filePath String?
+  originalName String?
+  mime String?
+  size Int @default(0)
+  published Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([published, category])
+}
+
+// Enquiries do not grant purchasing accounts or partner authorisation.
+model WebsiteEnquiry {
+  id Int @id @default(autoincrement())
+  reference String @unique
+  kind String
+  name String
+  email String
+  state String @default("")
+  category String
+  data String
+  attachments String @default("[]")
+  status String @default("NEW")
+  notes String @default("")
+  notificationSent Boolean @default(false)
+  confirmationSent Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([kind, state, status])
 }
 
 

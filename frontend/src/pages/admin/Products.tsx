@@ -251,10 +251,10 @@ export default function Products() {
           <div className="form-grid-3">
             <div className="field"><label>Retail</label><input type="number" step="0.01" value={form.retailPrice} onChange={set('retailPrice')} /></div>
             <div className="field"><label>Promo</label><input type="number" step="0.01" value={form.promoPrice} onChange={set('promoPrice')} /></div>
-            <div className="field"><label>Waterworker</label><input type="number" step="0.01" value={form.waterworkerPrice} onChange={set('waterworkerPrice')} /></div>
-            <div className="field"><label>Builder</label><input type="number" step="0.01" value={form.builderPrice} onChange={set('builderPrice')} /></div>
-            <div className="field"><label>Distributor 2</label><input type="number" step="0.01" value={form.distributor2Price} onChange={set('distributor2Price')} /></div>
-            <div className="field"><label>Dealer 1</label><input type="number" step="0.01" value={form.dealer1Price} onChange={set('dealer1Price')} /></div>
+            <div className="field"><label>Plumber Account（水工采购价，可留空）</label><input type="number" step="0.01" value={form.waterworkerPrice} onChange={set('waterworkerPrice')} /></div>
+            <div className="field"><label>Builder Account（建筑商采购价，可留空）</label><input type="number" step="0.01" value={form.builderPrice} onChange={set('builderPrice')} /></div>
+            <div className="field"><label>Authorised Dealer（分销商采购价，可留空）</label><input type="number" step="0.01" value={form.distributor2Price} onChange={set('distributor2Price')} /></div>
+            <div className="field"><label>Regional Distributor（一级代理采购价，可留空）</label><input type="number" step="0.01" value={form.dealer1Price} onChange={set('dealer1Price')} /></div>
             <div className="field"><label>Level 1</label><input type="number" step="0.01" value={form.level1Price} onChange={set('level1Price')} required /></div>
             <div className="field"><label>Level 2</label><input type="number" step="0.01" value={form.level2Price} onChange={set('level2Price')} required /></div>
             <div className="field"><label>Level 3</label><input type="number" step="0.01" value={form.level3Price} onChange={set('level3Price')} required /></div>

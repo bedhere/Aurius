@@ -16,6 +16,8 @@ import * as adminCatalog from '../controllers/adminCatalogController';
 import * as adminOrders from '../controllers/adminOrderController';
 import * as adminSystem from '../controllers/adminSystemController';
 import * as dealers from '../controllers/dealerLocationController';
+import * as resources from '../controllers/supportResourceController';
+import * as enquiries from '../controllers/websiteEnquiryController';
 import publicRoutes from './public.routes';
 import {
   loginSchema,
@@ -35,7 +37,7 @@ import {
   addressSchema,
   installationSchema,
 } from '../validators/order.schema';
-import { docUpload, imageUpload, uploadSub } from '../middleware/upload';
+import { docUpload, imageUpload, resourceUpload, uploadSub } from '../middleware/upload';
 
 const router = Router();
 
@@ -99,6 +101,14 @@ router.get('/downloads', requireActiveMember, downloads.listDownloads);
 router.get('/downloads/:id/file', requireActiveMember, downloads.downloadFile);
 
 // --- Admin -------------------------------------------------------------------
+router.get('/admin/resources', requireAuth, requireAdmin, resources.listAdminResources);
+router.post('/admin/resources', requireAuth, requireAdmin, uploadSub('resources'), resourceUpload.single('file'), resources.saveResource);
+router.post('/admin/resources/:id', requireAuth, requireAdmin, uploadSub('resources'), resourceUpload.single('file'), resources.saveResource);
+router.put('/admin/resources/:id', requireAuth, requireAdmin, resources.setResourcePublication);
+router.get('/admin/enquiries', requireAuth, requireAdmin, enquiries.listEnquiries);
+router.put('/admin/enquiries/:id', requireAuth, requireAdmin, enquiries.reviewEnquiry);
+router.get('/admin/enquiries/:id/attachments/:index', requireAuth, requireAdmin, enquiries.enquiryAttachment);
+
 router.get('/admin/dashboard', requireAuth, requireAdmin, adminDash.dashboard);
 
 router.get('/admin/applications', requireAuth, requireAdmin, adminMembers.listApplications);
@@ -152,6 +162,7 @@ router.get('/admin/audit-logs', requireAuth, requireAdmin, adminSystem.auditLogs
 router.get('/admin/security-logs', requireAuth, requireAdmin, adminSystem.securityLogs);
 router.get('/admin/settings', requireAuth, requireAdmin, adminSystem.getSettings);
 router.put('/admin/settings', requireAuth, requireAdmin, adminSystem.updateSettings);
+router.post('/admin/settings/vision-image', requireAuth, requireAdmin, uploadSub('brand'), imageUpload.single('file'), adminSystem.uploadHomepageImage);
 router.post('/admin/settings/homepage-images', requireAuth, requireAdmin, uploadSub('brand'), imageUpload.single('file'), adminSystem.uploadHomepageImage);
 
 router.get('/admin/dealers', requireAuth, requireAdmin, dealers.listAdminDealerLocations);

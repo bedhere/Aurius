@@ -15,7 +15,7 @@ test('member and admin layouts provide a return link to the public website', asy
   ]);
 
   for (const source of [member, admin]) {
-    assert.match(source, /<Link to="\/"[^>]*>Back to website<\/Link>/);
+    assert.match(source, /<Link to="\/"[^>]*>(?:\{t\(['"])?Back to website(?:['"]\)\})?<\/Link>/);
   }
 });
 

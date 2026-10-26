@@ -1,3 +1,4 @@
+import { revisionTranslations } from './revisionCopy';
 // English copy doubles as the fallback key. Only display text is translated;
 // API field values, product identifiers and saved records stay unchanged.
 export const interfaceTranslations: Record<string, string> = {
@@ -172,6 +173,7 @@ export const interfaceTranslations: Record<string, string> = {
   'Too many enquiries. Please try again later or email info@aurius.com.au.': '提交过于频繁，请稍后重试，或发送邮件至 info@aurius.com.au。',
   'Too many login attempts, please try again later': '登录尝试过于频繁，请稍后重试', 'Too many requests, please slow down': '操作过于频繁，请稍后重试',
   'Main navigation': '主导航', 'Close': '关闭', 'Menu': '菜单',
+  ...revisionTranslations,
 };
 
 export function translateInterface(text: string, language: string): string {

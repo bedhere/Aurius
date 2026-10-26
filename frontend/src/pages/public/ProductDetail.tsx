@@ -7,6 +7,7 @@ import ProductWarrantyBadge from '../../components/ProductWarrantyBadge';
 import { productLabel } from '../../utils/product-label';
 import InstallmentPaymentEntry from '../../components/InstallmentPaymentEntry';
 import { useAuth } from '../../context/AuthContext';
+import { ResourceLibrary } from '../../components/ResourceLibrary';
 import { useI18n } from '../../i18n/LanguageContext';
 import { productGallery, usesRemoteOnlyPresentation, usesWideFeaturePresentation } from '../../utils/product-media';
 import '../../assets/styles/pages-public.css';
@@ -130,8 +131,8 @@ export default function ProductDetail() {
   const selectedDrainImage = selectedDrainVariant?.attributes.image ?? safeGallery[0];
   const selectedFinishName = selectedDrainVariant?.attributes.colour ?? t(`drain.finish.${selectedDrainFinish}`);
   const guestCheckoutLink = `/guest-checkout?productId=${product.id}${selectedVariant?.id ? `&variantId=${selectedVariant.id}` : ''}`;
-  const canRetailBuy = !user || user.accountStatus !== 'ACTIVE';
-  const allowCart = Boolean(user?.accountStatus === 'ACTIVE' && inStock);
+  const canRetailBuy = (!user || user.accountStatus !== 'ACTIVE') && (product.prices?.promo != null || product.prices?.retail != null || product.price?.level === 0);
+  const allowCart = Boolean(user?.accountStatus === 'ACTIVE' && inStock && product.price != null);
 
   const selectedFitNote = isFloorDrain
     ? `${fitNote} · ${selectedFinishName}`
@@ -290,7 +291,7 @@ export default function ProductDetail() {
             ) : canRetailBuy ? (
               <Link to={guestCheckoutLink} className="btn btn-primary btn-lg">{t('Buy Now')}</Link>
             ) : (
-              <p className="small muted">{t('detail.approval')}</p>
+              <Link to="/contact" className="btn btn-outline btn-lg">{t('Contact AURIUS')}</Link>
             )}
 
             <ProductWarrantyBadge category={product.category} />
@@ -409,6 +410,7 @@ export default function ProductDetail() {
             <span className="small muted">{t('detail.viewFullImage')}</span>
           </section>
       )}
+      <div className="container support-resources-section"><h2 className="section-title">{t('Product Resources')}</h2><ResourceLibrary productId={product.id} /></div>
     </section>
   );
 }

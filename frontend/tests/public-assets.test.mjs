@@ -47,7 +47,9 @@ test('water product filtering exposes the two required series and filter-core gr
   assert.match(source, /params\.set\('series', series\)/);
   assert.match(source, /锐净/);
   assert.match(source, /赛博/);
-  assert.match(source, /滤芯/);
+  assert.match(source, /products\.filter/);
+  const translations = await (await import('node:fs/promises')).readFile(new URL('../src/i18n/LanguageContext.tsx', import.meta.url), 'utf8');
+  assert.match(translations, /滤芯/);
 });
 
 test('waterworker installation reporting includes an optional customer email field', async () => {
@@ -83,7 +85,7 @@ test('homepage carousel keeps its canvas, advances every five seconds and replac
   assert.match(styles, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 });
 
-test('stockists provides separate state pages with multiple dealers and recruitment fallback', async () => {
+test('stockists provides separate state pages with a consumer contact fallback', async () => {
   const source = await (await import('node:fs/promises')).readFile(new URL('../src/pages/public/Stockists.tsx', import.meta.url), 'utf8');
 
   assert.match(source, /groupDealerLocations\(dealers\)/);
@@ -94,7 +96,7 @@ test('stockists provides separate state pages with multiple dealers and recruitm
   assert.match(source, /dealers\.map/);
   assert.match(source, /stockists\.recruiting/);
   assert.match(source, /stockists\.vacancy/);
-  assert.match(source, /<Link to="\/trade"/);
+  assert.match(source, /<Link to="\/contact"/);
   assert.match(source, /\/api\/dealers/);
   assert.match(source, /<iframe/);
   assert.match(source, /dealer\.address/);

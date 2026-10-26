@@ -11,6 +11,7 @@ const Products = lazy(() => import('./pages/public/Products'));
 const ProductDetail = lazy(() => import('./pages/public/ProductDetail'));
 const GuestCheckout = lazy(() => import('./pages/public/GuestCheckout'));
 const Stockists = lazy(() => import('./pages/public/Stockists'));
+const Warranty = lazy(() => import('./pages/public/Warranty'));
 const Support = lazy(() => import('./pages/public/Support'));
 const Contact = lazy(() => import('./pages/public/Contact'));
 const BecomePartner = lazy(() => import('./pages/public/BecomePartner'));
@@ -50,6 +51,8 @@ const AdminEmailLogs = lazy(() => import('./pages/admin/EmailLogs'));
 const AdminAuditLogs = lazy(() => import('./pages/admin/AuditLogs'));
 const AdminSecurityLogs = lazy(() => import('./pages/admin/SecurityLogs'));
 const AdminDealerLocations = lazy(() => import('./pages/admin/DealerLocations'));
+const AdminResources = lazy(() => import('./pages/admin/Resources'));
+const AdminEnquiries = lazy(() => import('./pages/admin/Enquiries'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings'));
 
 export default function App() {
@@ -66,6 +69,7 @@ export default function App() {
             <Route path="/stockists" element={<Stockists />} />
             <Route path="/stockists/:state" element={<Stockists />} />
             <Route path="/support" element={<Support />} />
+            <Route path="/warranty" element={<Warranty />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/become-a-partner" element={<BecomePartner />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -112,6 +116,8 @@ export default function App() {
             <Route path="security-logs" element={<AdminSecurityLogs />} />
             <Route path="dealers" element={<AdminDealerLocations />} />
             <Route path="settings" element={<AdminSettings />} />
+            <Route path="resources" element={<AdminResources />} />
+            <Route path="enquiries" element={<AdminEnquiries />} />
           </Route>
         </Routes>
       </Suspense>

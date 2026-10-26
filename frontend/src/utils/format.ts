@@ -34,11 +34,15 @@ export function statusBadgeClass(status: string): string {
 export function roleLabel(role: string): string {
   switch (role) {
     case 'REGIONAL_AGENT':
-      return 'Regional Exclusive Agent (Level 1)';
+      return 'Authorised Regional Distributor';
     case 'LICENSED_TRADESMAN':
-      return 'Licensed Tradesman (Level 2)';
+      return 'Plumber Account';
     case 'SUB_DEALER':
-      return 'Sub-dealer (Level 3)';
+      return 'Authorised Dealer';
+    case 'WATERWORKER':
+      return 'Plumber Account';
+    case 'BUILDER':
+      return 'Builder Account';
     case 'ADMIN':
       return 'Administrator';
     default:
@@ -54,6 +58,10 @@ export function roleShort(role: string): string {
       return 'Level 2 · Tradesman';
     case 'SUB_DEALER':
       return 'Level 3 · Sub-dealer';
+    case 'WATERWORKER':
+      return 'Plumber Account';
+    case 'BUILDER':
+      return 'Builder Account';
     case 'ADMIN':
       return 'Admin';
     default:

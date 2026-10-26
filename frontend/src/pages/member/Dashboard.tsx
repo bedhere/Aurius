@@ -1,3 +1,4 @@
+import { AccountOverview } from '../../components/AccountOverview';
 import { useI18n } from '../../i18n/LanguageContext';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -60,6 +61,7 @@ export default function Dashboard() {
         </p>
       </div>
 
+      <AccountOverview />
       <div className="stat-grid">
         <div className="stat-card">
           <div className="stat-label">{t("Total Orders")}</div>

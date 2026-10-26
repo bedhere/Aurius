@@ -45,10 +45,12 @@ export function PriceDisplay({ price, prices, rrp, priceNote, stock }: {
 }) {
   const { t } = useI18n();
   if (prices) {
+    const amount = price?.value ?? prices.member ?? prices.promo ?? prices.retail;
+    if (amount == null) return <div className="price-locked">{t(priceNote || 'Price available on enquiry. Please contact AURIUS.')}</div>;
     const format = (value: number | null) => value == null ? '—' : `${prices.currency} ${value.toFixed(2)}`;
     return (
       <div className="product-prices">
-        <div className="price"><span className="currency">{prices.currency} </span>{(price?.value ?? prices.promo ?? prices.retail ?? 0).toFixed(2)}</div>
+        <div className="price"><span className="currency">{prices.currency} </span>{amount.toFixed(2)}</div>
         {prices.retail != null && <div className="small muted">{t('Retail price:')} {format(prices.retail)}</div>}
         {prices.promo != null && <div className="small price-promo">{t('Promotion price:')} {format(prices.promo)}</div>}
         {prices.member != null && <div className="small price-member">{t(prices.memberLabel)}: {format(prices.member)}</div>}

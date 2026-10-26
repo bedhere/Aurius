@@ -11,6 +11,11 @@ export const dealerLocationSchema = z.object({
   photos: z.array(z.string().trim().min(1).max(1000)).default([]),
   note: z.string().trim().max(2000).optional().nullable(),
   active: z.boolean().default(true),
+  authorised: z.boolean().default(false),
+  partnerType: z.enum(['REGIONAL_DISTRIBUTOR', 'DEALER']).default('REGIONAL_DISTRIBUTOR'),
+  serviceArea: z.string().trim().max(500).optional().nullable(),
+  website: z.string().trim().max(500).refine((value) => !value || /^https:\/\/[^\s]+$/i.test(value), 'Use a full HTTPS website URL').optional().nullable(),
+  productCategories: z.string().trim().max(1000).optional().nullable(),
 });
 
 export type DealerLocationInput = z.infer<typeof dealerLocationSchema>;

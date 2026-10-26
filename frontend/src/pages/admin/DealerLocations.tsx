@@ -17,6 +17,11 @@ type DealerForm = {
   photos: string;
   note: string;
   active: boolean;
+  authorised: boolean;
+  partnerType: string;
+  serviceArea: string;
+  website: string;
+  productCategories: string;
 };
 
 const emptyForm: DealerForm = {
@@ -29,7 +34,7 @@ const emptyForm: DealerForm = {
   longitude: '',
   photos: '',
   note: '',
-  active: true,
+  active: false, authorised: false, partnerType: 'REGIONAL_DISTRIBUTOR', serviceArea: '', website: '', productCategories: '',
 };
 
 function formFromLocation(location: DealerLocation): DealerForm {
@@ -43,7 +48,7 @@ function formFromLocation(location: DealerLocation): DealerForm {
     longitude: String(location.longitude),
     photos: location.photos.join('\n'),
     note: location.note ?? '',
-    active: location.active,
+    active: location.active, authorised: location.authorised ?? false, partnerType: location.partnerType ?? 'REGIONAL_DISTRIBUTOR', serviceArea: location.serviceArea ?? '', website: location.website ?? '', productCategories: location.productCategories ?? '',
   };
 }
 
@@ -58,7 +63,7 @@ function toPayload(form: DealerForm) {
     longitude: Number(form.longitude),
     photos: form.photos.split(/\r?\n/).map((photo) => photo.trim()).filter(Boolean),
     note: form.note.trim() || null,
-    active: form.active,
+    active: form.active, authorised: form.authorised, partnerType: form.partnerType, serviceArea: form.serviceArea, website: form.website, productCategories: form.productCategories,
   };
 }
 
@@ -132,16 +137,21 @@ export default function DealerLocations() {
   return (
     <>
       <h2>{tAdmin('dealers')}</h2>
-      <p className="small muted">启用的网点会显示在对应州的独立页面，包含照片、电话、地址与地图。同州可添加多个网点；该州全部网点停用后恢复“虚位以待”。保存后刷新公开页面即可查看更新。</p>
+      <p className="small muted">仅同时勾选“启用”和“正式授权”、且类型为一级代理商的网点才会公开。未签约资料可先保存为未授权状态；分销商不在官网展示。暂无公开网点时显示网络建设中。</p>
       {message && <Alert type={message.type}>{message.text}</Alert>}
 
       <form className="panel" onSubmit={submit}>
         <h3>{editingId === null ? '新增经销网点' : '编辑经销网点'}</h3>
         <div className="form-grid-2">
-          <div className="field"><label>名称</label><input value={form.name} onChange={setField('name')} required /></div>
-          <div className="field"><label>电话</label><input value={form.phone} onChange={setField('phone')} /></div>
-          <div className="field"><label>地址</label><input value={form.address} onChange={setField('address')} required /></div>
-          <div className="field"><label>城市</label><input value={form.city} onChange={setField('city')} /></div>
+          <div className="field"><label>名称</label><input type="text" value={form.name} onChange={setField('name')} required /></div>
+          <div className="field"><label>电话</label><input type="text" value={form.phone} onChange={setField('phone')} /></div>
+          <div className="field"><label>地址</label><input type="text" value={form.address} onChange={setField('address')} required /></div>
+          <div className="field"><label>代理类型</label><select value={form.partnerType} onChange={setField('partnerType')}><option value="REGIONAL_DISTRIBUTOR">一级代理商</option><option value="DEALER">分销商（不公开）</option></select></div>
+          <div className="field"><label>服务区域</label><input type="text" value={form.serviceArea} onChange={setField('serviceArea')} /></div>
+          <div className="field"><label>公司网站（完整 https:// 地址）</label><input type="url" value={form.website} onChange={setField('website')} /></div>
+          <div className="field"><label>产品类别</label><input type="text" value={form.productCategories} onChange={setField('productCategories')} /></div>
+          <label className="checkbox-row"><input type="checkbox" checked={form.authorised} onChange={setField('authorised')} />已正式授权（确认后方可公开）</label>
+          <div className="field"><label>城市</label><input type="text" value={form.city} onChange={setField('city')} /></div>
           <div className="field">
             <label>州 / 领地</label>
             <select value={form.state} onChange={setField('state')}>

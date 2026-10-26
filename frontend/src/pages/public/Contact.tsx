@@ -1,4 +1,5 @@
 import { useI18n } from '../../i18n/LanguageContext';
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { AU_STATES } from '../../api/types';
@@ -9,8 +10,10 @@ interface CompanyInfo { phone?: string; email?: string; address?: string; hours?
 const INITIAL_FORM = { name: '', companyName: '', email: '', phone: '', state: '', enquiryType: 'General Enquiries', message: '' };
 const ENQUIRY_TYPES = [
   ['General Enquiries', 'For product information, general questions and assistance with AURIUS solutions.'],
+  ['Product Enquiries', 'For help choosing a product or checking availability.'],
   ['Trade & Business Enquiries', 'For enquiries from plumbers, builders, distributors and other business customers.'],
-  ['Technical & After-Sales Support', 'For installation guidance, product assistance and warranty enquiries.'],
+  ['Technical Support', 'For installation guidance and technical product assistance.'],
+  ['Warranty & After-Sales', 'For warranty enquiries and after-sales assistance.'],
 ];
 
 export default function Contact() {
@@ -24,7 +27,7 @@ export default function Contact() {
     event.preventDefault(); setSending(true); setStatus(null);
     try {
       await api.post('/api/contact', form);
-      setStatus({ type: 'success', text: 'Your enquiry has been received. Our team will respond as soon as possible.' });
+      setStatus({ type: 'success', text: 'Your enquiry has been received. Our team will review your message and respond as soon as possible.' });
       setForm(INITIAL_FORM);
     } catch (err) {
       const failure = err as ApiError;
@@ -61,6 +64,7 @@ export default function Contact() {
             <div className="field"><label htmlFor="contact-type">{t("Enquiry Type *")}</label><select id="contact-type" value={form.enquiryType} onChange={set('enquiryType')}>{ENQUIRY_TYPES.map(([type]) => <option key={type} value={type}>{t(type)}</option>)}</select></div>
           </div>
           <div className="field"><label htmlFor="contact-message">{t("Message *")}</label><textarea id="contact-message" rows={5} maxLength={6000} value={form.message} onChange={set('message')} required /></div>
+          <p className="muted small">{t("Your details will be used to respond to your enquiry in accordance with our")} <Link to="/privacy-policy">{t("Privacy Policy")}</Link>.</p>
           <button className="btn btn-primary btn-lg" type="submit">{sending ? t("Sending…") : t("Send Enquiry")}</button>
         </fieldset>
       </form>}
