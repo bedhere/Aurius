@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../../api/client';
 import { Alert } from '../../components/ui';
-import { isVideoResourceCategory, RESOURCE_LABELS, SupportResource } from '../../utils/support-resources';
+import { isVideoResourceCategory, resourceFileAccept, RESOURCE_LABELS, SupportResource } from '../../utils/support-resources';
 import '../../assets/styles/pages-admin.css';
 
 const EMPTY = { title: '', category: 'PRODUCT_MANUAL', description: '', productId: '', certificateNumber: '', certificationScope: '', published: false };
-const LABELS: Record<string, string> = { PRODUCT_MANUAL: '产品说明书', INSTALLATION_GUIDE: '安装指南', TECHNICAL_SPECIFICATION: '技术参数', MAINTENANCE_GUIDE: '日常维护说明', WATERMARK_CERTIFICATE: 'WaterMark 证书', INSTALLATION_VIDEO: '安装视频', PRODUCT_FEATURE_VIDEO: '产品功能介绍视频', WARRANTY_TERMS: '正式质保条款' };
+const LABELS: Record<string, string> = { PRODUCT_MANUAL: '产品说明书', INSTALLATION_GUIDE: '安装指南', TECHNICAL_SPECIFICATION: '技术参数', MAINTENANCE_GUIDE: '维修指导', WATERMARK_CERTIFICATE: 'WaterMark 证书', INSTALLATION_VIDEO: '安装视频', PRODUCT_FEATURE_VIDEO: '产品功能介绍视频', WARRANTY_TERMS: '正式质保条款' };
 interface ResourceData { resources: SupportResource[]; products: { id: number; name: string; model: string | null }[]; }
 
 export default function Resources() {
@@ -72,7 +72,7 @@ export default function Resources() {
         <div className="field"><label htmlFor="resource-title">标题 *</label><input type="text" id="resource-title" value={form.title} onChange={set('title')} maxLength={200} required /></div>
         <div className="field"><label htmlFor="resource-category">资料类型 *</label><select id="resource-category" value={form.category} onChange={set('category')}>{Object.entries(RESOURCE_LABELS).map(([value, label]) => <option key={value} value={value}>{LABELS[value]} / {label}</option>)}</select></div>
         <div className="field"><label htmlFor="resource-product">对应产品型号{form.category !== 'WARRANTY_TERMS' && form.published ? ' *' : ''}</label><select id="resource-product" value={form.productId} onChange={set('productId')} required={form.published && form.category !== 'WARRANTY_TERMS'}><option value="">暂不关联 / 通用质保条款</option>{data.products.map((product) => <option key={product.id} value={product.id}>{product.model ? `${product.model} — ` : ''}{product.name}</option>)}</select></div>
-        <div className="field"><label htmlFor="resource-file">文件（可后续添加）</label><input key={inputKey} id="resource-file" type="file" accept={isVideoResourceCategory(form.category) ? '.mp4,.webm' : '.pdf,.jpg,.jpeg,.png'} onChange={(event) => setFile(event.target.files?.[0] ?? null)} /><p className="hint">{isVideoResourceCategory(form.category) ? '视频支持 MP4 / WebM' : '资料支持 PDF / JPG / PNG'}，最大 150 MB。编辑时不选文件则保留原文件。</p></div>
+        <div className="field"><label htmlFor="resource-file">文件（可后续添加）</label><input key={inputKey} id="resource-file" type="file" accept={resourceFileAccept(form.category)} onChange={(event) => setFile(event.target.files?.[0] ?? null)} /><p className="hint">{form.category === 'MAINTENANCE_GUIDE' ? '维修指导支持 MP4 / WebM 视频及 PDF / JPG / PNG 资料' : isVideoResourceCategory(form.category) ? '视频支持 MP4 / WebM' : '资料支持 PDF / JPG / PNG'}，最大 150 MB。编辑时不选文件则保留原文件。</p></div>
       </div>
       <div className="field"><label htmlFor="resource-description">内容说明</label><textarea id="resource-description" rows={3} maxLength={4000} value={form.description} onChange={set('description')} /></div>
       {form.category === 'WATERMARK_CERTIFICATE' && <div className="form-grid-2"><div className="field"><label htmlFor="resource-certificate">证书编号（发布时必填）</label><input type="text" id="resource-certificate" value={form.certificateNumber} onChange={set('certificateNumber')} required={form.published} maxLength={200} /></div><div className="field"><label htmlFor="resource-scope">实际认证主体、型号及范围（发布时必填）</label><textarea id="resource-scope" value={form.certificationScope} onChange={set('certificationScope')} required={form.published} maxLength={2000} /></div></div>}

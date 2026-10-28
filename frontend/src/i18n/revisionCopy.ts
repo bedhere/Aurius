@@ -27,7 +27,7 @@ export const revisionTranslations: Record<string, string> = {
   'Price available on enquiry. Please contact AURIUS.': '采购价格请联系 AURIUS 咨询。',
   'Plumber price': '水工采购价', 'Builder price': '建筑商采购价', 'Regional distributor price': '一级区域代理采购价', 'Dealer price': '分销商采购价',
   'Product Manuals': '产品说明书', 'Installation Guides': '安装指南', 'Technical Specifications': '技术参数',
-  'Maintenance Guides': '日常维护说明', 'WaterMark Certificates': 'WaterMark 认证证书', 'Installation Videos': '安装视频',
+  'Repair Guides': '维修指导', 'WaterMark Certificates': 'WaterMark 认证证书', 'Installation Videos': '安装视频',
   'Product Feature Videos': '产品功能介绍视频',
   'Product image': '产品图片', 'Product images': '产品图片', 'View product image': '查看产品图片',
   'Warranty Terms': '质保条款', 'View Warranty Terms': '查看质保条款', 'View / Download': '查看 / 下载',

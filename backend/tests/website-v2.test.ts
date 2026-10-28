@@ -54,6 +54,8 @@ describe('Website v2 publication and enquiry frameworks', () => {
     ['INSTALLATION_VIDEO', 'webm', 'video/webm'],
     ['PRODUCT_FEATURE_VIDEO', 'mp4', 'video/mp4'],
     ['PRODUCT_FEATURE_VIDEO', 'webm', 'video/webm'],
+    ['MAINTENANCE_GUIDE', 'mp4', 'video/mp4'],
+    ['MAINTENANCE_GUIDE', 'webm', 'video/webm'],
   ])('publishes model-linked %s (%s) and serves video ranges', async (category, extension, contentType) => {
     const video = await request(app).post('/api/admin/resources').set('Authorization', auth)
       .field('title', `${category} test`).field('category', category).field('productId', String(productId)).field('published', 'true')
@@ -71,6 +73,24 @@ describe('Website v2 publication and enquiry frameworks', () => {
     expect(otherListing.body.data.some((item: { id: number }) => item.id === id)).toBe(false);
     await request(app).put(`/api/admin/resources/${id}`).set('Authorization', auth).send({ published: false });
     expect((await request(app).get(video.body.data.fileUrl)).status).toBe(404);
+  });
+
+  it.each([
+    ['repair.pdf', 'application/pdf'],
+    ['repair.png', 'image/png'],
+  ])('keeps existing repair documents compatible alongside videos (%s)', async (filename, contentType) => {
+    const saved = await request(app).post('/api/admin/resources').set('Authorization', auth)
+      .field('title', 'Repair document').field('category', 'MAINTENANCE_GUIDE').field('productId', String(productId)).field('published', 'true')
+      .attach('file', Buffer.from('test document fixture'), { filename, contentType });
+    expect(saved.status).toBe(200);
+    const id = saved.body.data.id;
+    expect(saved.body.data).toMatchObject({ category: 'MAINTENANCE_GUIDE', published: true, originalName: filename });
+    const edited = await request(app).post(`/api/admin/resources/${id}`).set('Authorization', auth).field('title', 'Updated repair document');
+    expect(edited.status).toBe(200);
+    expect(edited.body.data.originalName).toBe(filename);
+    await request(app).put(`/api/admin/resources/${id}`).set('Authorization', auth).send({ published: false });
+    expect((await request(app).put(`/api/admin/resources/${id}`).set('Authorization', auth).send({ published: true })).status).toBe(200);
+    expect((await request(app).get(saved.body.data.fileUrl)).headers['content-type']).toContain(contentType);
   });
 
   it.each([

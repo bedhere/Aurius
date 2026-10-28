@@ -43,7 +43,9 @@ async function checkPublication(resource: z.infer<typeof resourceSchema>, hasFil
     throw badRequest('Enter the verified certificate number and certification scope before publishing');
   }
   const isVideoCategory = resource.category === 'INSTALLATION_VIDEO' || resource.category === 'PRODUCT_FEATURE_VIDEO';
-  if (isVideoCategory ? !mime?.startsWith('video/') : mime?.startsWith('video/')) {
+  const isVideoFile = Boolean(mime?.startsWith('video/'));
+  const acceptsVideo = isVideoCategory || resource.category === 'MAINTENANCE_GUIDE';
+  if ((isVideoCategory && !isVideoFile) || (!acceptsVideo && isVideoFile)) {
     throw badRequest('Choose a file that matches the resource category');
   }
 }
