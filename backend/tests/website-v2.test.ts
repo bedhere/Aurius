@@ -49,14 +49,57 @@ describe('Website v2 publication and enquiry frameworks', () => {
     expect((await request(app).get(`/api/support/resources/${id}/file`)).status).toBe(404);
   });
 
-  it('accepts model-linked installation videos and serves video files for browser playback', async () => {
+  it.each([
+    ['INSTALLATION_VIDEO', 'mp4', 'video/mp4'],
+    ['INSTALLATION_VIDEO', 'webm', 'video/webm'],
+    ['PRODUCT_FEATURE_VIDEO', 'mp4', 'video/mp4'],
+    ['PRODUCT_FEATURE_VIDEO', 'webm', 'video/webm'],
+  ])('publishes model-linked %s (%s) and serves video ranges', async (category, extension, contentType) => {
     const video = await request(app).post('/api/admin/resources').set('Authorization', auth)
-      .field('title', 'Installation video').field('category', 'INSTALLATION_VIDEO').field('productId', String(productId)).field('published', 'true')
-      .attach('file', Buffer.from('test video fixture'), { filename: 'installation.mp4', contentType: 'video/mp4' });
+      .field('title', `${category} test`).field('category', category).field('productId', String(productId)).field('published', 'true')
+      .attach('file', Buffer.from('test video fixture'), { filename: `video.${extension}`, contentType });
     expect(video.status).toBe(200);
+    const id = video.body.data.id;
+    const listing = await request(app).get(`/api/support/resources?productId=${productId}`);
+    expect(listing.body.data.find((item: { id: number }) => item.id === id)).toMatchObject({ category, product: { id: productId } });
     const response = await request(app).get(video.body.data.fileUrl).set('Range', 'bytes=0-3');
     expect(response.status).toBe(206);
-    expect(response.headers['content-type']).toContain('video/mp4');
+    expect(response.headers['content-type']).toContain(contentType);
+    expect(response.headers['content-range']).toBe('bytes 0-3/18');
+    const otherProductId = await seedProduct(app);
+    const otherListing = await request(app).get(`/api/support/resources?productId=${otherProductId}`);
+    expect(otherListing.body.data.some((item: { id: number }) => item.id === id)).toBe(false);
+    await request(app).put(`/api/admin/resources/${id}`).set('Authorization', auth).send({ published: false });
+    expect((await request(app).get(video.body.data.fileUrl)).status).toBe(404);
+  });
+
+  it.each([
+    ['PRODUCT_FEATURE_VIDEO', 'manual.pdf', 'application/pdf'],
+    ['INSTALLATION_VIDEO', 'manual.pdf', 'application/pdf'],
+    ['PRODUCT_MANUAL', 'feature.mp4', 'video/mp4'],
+  ])('rejects publication of %s with a mismatched file', async (category, filename, contentType) => {
+    const response = await request(app).post('/api/admin/resources').set('Authorization', auth)
+      .field('title', 'Mismatched resource').field('category', category).field('productId', String(productId)).field('published', 'true')
+      .attach('file', Buffer.from('test file fixture'), { filename, contentType });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Choose a file that matches the resource category');
+  });
+
+  it('reclassifies an existing installation video as a feature video without re-uploading', async () => {
+    const original = await request(app).post('/api/admin/resources').set('Authorization', auth)
+      .field('title', 'Existing feature demonstration').field('category', 'INSTALLATION_VIDEO').field('productId', String(productId)).field('published', 'true')
+      .attach('file', Buffer.from('test video fixture'), { filename: 'existing.mp4', contentType: 'video/mp4' });
+    expect(original.status).toBe(200);
+    const id = original.body.data.id;
+    const changed = await request(app).post(`/api/admin/resources/${id}`).set('Authorization', auth)
+      .field('category', 'PRODUCT_FEATURE_VIDEO');
+    expect(changed.status).toBe(200);
+    expect(changed.body.data).toMatchObject({ category: 'PRODUCT_FEATURE_VIDEO', originalName: 'existing.mp4', hasFile: true, published: true });
+    expect((await request(app).get(original.body.data.fileUrl)).status).toBe(200);
+    await request(app).put(`/api/admin/resources/${id}`).set('Authorization', auth).send({ published: false });
+    expect((await request(app).put(`/api/admin/resources/${id}`).set('Authorization', auth).send({ published: true })).status).toBe(200);
+    const listing = await request(app).get(`/api/support/resources?productId=${productId}`);
+    expect(listing.body.data.find((item: { id: number }) => item.id === id)).toMatchObject({ category: 'PRODUCT_FEATURE_VIDEO', originalName: 'existing.mp4' });
   });
 
   it('only publicly lists enabled, formally authorised regional distributors', async () => {

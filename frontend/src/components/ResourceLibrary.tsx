@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
 import { useI18n } from '../i18n/LanguageContext';
-import { RESOURCE_LABELS, SupportResource } from '../utils/support-resources';
+import { isVideoResourceCategory, RESOURCE_LABELS, SupportResource } from '../utils/support-resources';
 import { Alert } from './ui';
 import '../assets/styles/pages-public.css';
 
@@ -32,7 +32,7 @@ export function ResourceLibrary({ productId, categories = DEFAULT_CATEGORIES }: 
     <div className={`resource-grid${categories.length === 1 ? ' resource-grid--single' : ''}`}>{categories.map((category) => {
       const items = resources.filter((resource) => resource.category === category && (!model || !resource.productId || resource.productId === Number(model)));
       return <article className="resource-category" key={category}>
-        <span className="resource-category__label">{category === 'INSTALLATION_VIDEO' ? 'VIDEO' : category === 'WATERMARK_CERTIFICATE' ? 'WaterMark' : 'AURIUS'}</span>
+        <span className="resource-category__label">{isVideoResourceCategory(category) ? 'VIDEO' : category === 'WATERMARK_CERTIFICATE' ? 'WaterMark' : 'AURIUS'}</span>
         <h3>{t(RESOURCE_LABELS[category])}</h3>
         {items.length ? <ul className="resource-items">{items.map((resource) => <li key={resource.id}>
           <h4>{resource.title}</h4>
@@ -40,7 +40,7 @@ export function ResourceLibrary({ productId, categories = DEFAULT_CATEGORIES }: 
           {resource.description && <p>{resource.description}</p>}
           {resource.certificateNumber && <p className="small">{t('Certificate number')}: {resource.certificateNumber}</p>}
           {resource.certificationScope && <p className="small">{t('Certification scope')}: {resource.certificationScope}</p>}
-          {resource.mime?.startsWith('video/') ? <video src={resource.fileUrl} controls preload="none" aria-label={resource.title} /> : <a className="btn btn-outline btn-sm" href={resource.fileUrl} target="_blank" rel="noopener noreferrer">{t('View / Download')}</a>}
+          {resource.mime?.startsWith('video/') ? <video src={resource.fileUrl} controls playsInline preload="none" aria-label={resource.title} /> : <a className="btn btn-outline btn-sm" href={resource.fileUrl} target="_blank" rel="noopener noreferrer">{t('View / Download')}</a>}
         </li>)}</ul> : <div className="resource-empty"><p>{t('Documentation coming soon.')}</p><p className="small muted">{t(category === 'WATERMARK_CERTIFICATE' ? 'Certification information will be published for the specific product model once verified.' : category === 'WARRANTY_TERMS' ? 'The full warranty terms will be published here when available. Please contact AURIUS for assistance.' : 'Please contact AURIUS for information for your product model.')}</p></div>}
       </article>;
     })}</div>

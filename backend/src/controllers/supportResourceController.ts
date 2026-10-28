@@ -8,7 +8,7 @@ import { config } from '../config';
 import { badRequest, notFound, ok } from '../lib/response';
 import { audit } from '../services/auditService';
 
-export const resourceCategories = ['PRODUCT_MANUAL', 'INSTALLATION_GUIDE', 'TECHNICAL_SPECIFICATION', 'MAINTENANCE_GUIDE', 'WATERMARK_CERTIFICATE', 'INSTALLATION_VIDEO', 'WARRANTY_TERMS'] as const;
+export const resourceCategories = ['PRODUCT_MANUAL', 'INSTALLATION_GUIDE', 'TECHNICAL_SPECIFICATION', 'MAINTENANCE_GUIDE', 'WATERMARK_CERTIFICATE', 'INSTALLATION_VIDEO', 'PRODUCT_FEATURE_VIDEO', 'WARRANTY_TERMS'] as const;
 const resourceSchema = z.object({
   title: z.string().trim().min(1).max(200),
   category: z.enum(resourceCategories),
@@ -42,7 +42,8 @@ async function checkPublication(resource: z.infer<typeof resourceSchema>, hasFil
   if (resource.category === 'WATERMARK_CERTIFICATE' && (!resource.certificateNumber || !resource.certificationScope)) {
     throw badRequest('Enter the verified certificate number and certification scope before publishing');
   }
-  if (resource.category === 'INSTALLATION_VIDEO' ? !mime?.startsWith('video/') : mime?.startsWith('video/')) {
+  const isVideoCategory = resource.category === 'INSTALLATION_VIDEO' || resource.category === 'PRODUCT_FEATURE_VIDEO';
+  if (isVideoCategory ? !mime?.startsWith('video/') : mime?.startsWith('video/')) {
     throw badRequest('Choose a file that matches the resource category');
   }
 }

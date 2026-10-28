@@ -5,8 +5,13 @@ export const RESOURCE_LABELS: Record<string, string> = {
   MAINTENANCE_GUIDE: 'Maintenance Guides',
   WATERMARK_CERTIFICATE: 'WaterMark Certificates',
   INSTALLATION_VIDEO: 'Installation Videos',
+  PRODUCT_FEATURE_VIDEO: 'Product Feature Videos',
   WARRANTY_TERMS: 'Warranty Terms',
 };
+
+export function isVideoResourceCategory(category: string): boolean {
+  return category === 'INSTALLATION_VIDEO' || category === 'PRODUCT_FEATURE_VIDEO';
+}
 
 export interface SupportResource {
   id: number;
