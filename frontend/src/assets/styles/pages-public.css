@@ -245,9 +245,13 @@
 
 .product-detail {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 40px;
   align-items: start;
+}
+
+.product-detail > div {
+  min-width: 0;
 }
 
 .product-detail__header {
@@ -310,15 +314,16 @@
 }
 
 .product-detail__thumbs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  display: flex;
   gap: 8px;
   padding: 10px;
   background: #fff;
+  overflow-x: auto;
 }
 
 .product-detail__thumbs button {
-  border: 1px solid var(--stone-200);
+  flex: 0 0 72px;
+  border: 2px solid var(--stone-200);
   border-radius: var(--radius-sm);
   padding: 0;
   overflow: hidden;
@@ -329,11 +334,16 @@
   border-color: var(--brand);
 }
 
+.product-detail__thumbs button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 .product-detail__thumbs img {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .product-detail__carousel-note {

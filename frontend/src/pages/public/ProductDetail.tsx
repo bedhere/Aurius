@@ -205,12 +205,12 @@ export default function ProductDetail() {
                 </div>
               ) : (
                 <>
-                  <img src={activeGallery} alt={remoteOnly ? `${product.name} — ${t('detail.remoteControl')}` : product.name} />
+                  <img id="product-main-image" src={activeGallery} alt={`${product.name} — ${t('Product image')} ${activeImage + 1}`} />
                   {safeGallery.length > 1 && (
-                    <div className="product-detail__thumbs">
+                    <div className="product-detail__thumbs" role="group" aria-label={t('Product images')}>
                       {safeGallery.map((image, index) => (
-                        <button key={image} type="button" className={index === activeImage ? 'active' : ''} onClick={() => setActiveImage(index)}>
-                          <img src={image} alt={product.name} />
+                        <button key={image} type="button" className={index === activeImage ? 'active' : ''} onClick={() => setActiveImage(index)} aria-label={`${t('View product image')} ${index + 1}`} aria-pressed={index === activeImage} aria-controls="product-main-image">
+                          <img src={image} alt="" loading="lazy" />
                         </button>
                       ))}
                     </div>

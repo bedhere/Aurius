@@ -48,6 +48,7 @@ export default function Products() {
   const [images, setImages] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingDiagram, setUploadingDiagram] = useState<'remoteImage' | 'dimensionImage' | 'featureImage' | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -65,15 +66,27 @@ export default function Products() {
     setForm((current) => ({ ...current, [k]: v } as typeof empty));
   };
 
-  const uploadImage = async (f: File) => {
-    const fd = new FormData();
-    fd.append('file', f);
-    const r = await api.postForm<{ url: string }>('/api/admin/products/images', fd);
-    setImages([...images, r.url]);
+  const uploadImages = async (files: File[]) => {
+    if (!files.length || uploadingImages) return;
+    setUploadingImages(true);
+    setMessage(null);
+    try {
+      for (const file of files) {
+        if (file.size > 10 * 1024 * 1024) throw new Error('图片不能超过 10 MB。');
+        const body = new FormData();
+        body.append('file', file);
+        const result = await api.postForm<{ url: string }>('/api/admin/products/images', body);
+        setImages((current) => [...current, result.url]);
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: (error as Error).message || '图片上传失败，请重试。' });
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const uploadDiagram = async (file: File, field: 'remoteImage' | 'dimensionImage' | 'featureImage') => {
-    if (uploadingDiagram) return;
+    if (uploadingDiagram || uploadingImages) return;
     if (file.size > 10 * 1024 * 1024) {
       setMessage({ type: 'error', text: '图片不能超过 10 MB。' });
       return;
@@ -129,7 +142,7 @@ export default function Products() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (uploadingDiagram) return;
+    if (uploadingDiagram || uploadingImages) return;
     setMessage(null);
     const specs = form.specs.trim() ? (() => { try { return JSON.parse(form.specs); } catch { return null; } })() : null;
     const payload = {
@@ -166,7 +179,7 @@ export default function Products() {
   };
 
   const startEdit = async (p: ProductRow) => {
-    if (uploadingDiagram) return;
+    if (uploadingDiagram || uploadingImages) return;
     const detail = await api.get<ProductDetailResponse>(`/api/admin/products/${p.id}`).catch(() => null);
     if (!detail) {
       setMessage({ type: 'error', text: 'Unable to load product details.' });
@@ -224,7 +237,7 @@ export default function Products() {
           <option>Engineering Custom Floor Drain</option>
         </select>
         <span className="spacer" />
-        <button className="btn btn-primary btn-sm" disabled={uploadingDiagram !== null} onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(empty); setImages([]); }}>
+        <button className="btn btn-primary btn-sm" disabled={uploadingImages || uploadingDiagram !== null} onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(empty); setImages([]); }}>
           + New Product
         </button>
       </div>
@@ -262,8 +275,10 @@ export default function Products() {
           <div className="field"><label>Specs (JSON, optional)</label><textarea value={form.specs} onChange={set('specs')} placeholder='{"sizes":["S86","S90"],"colors":["White"],"features":["Heated Seat"]}' /></div>
           <div className="field">
             <label>Images</label>
-            {usesRemoteOnlyPresentation(form) && <p className="small muted">智能马桶前台仅显示下方的“遥控器图片”，此处的实物图不会显示在商品列表、详情页或购物车。</p>}
-            <input type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => { if (e.target.files?.[0]) uploadImage(e.target.files[0]); }} />
+            {usesRemoteOnlyPresentation(form) && <p className="small muted">下方的“智能马桶主图”优先展示；这里的图片会作为详情页缩略图，点击即可切换大图。未设置主图时使用这里的第一张图片。</p>}
+            <input id="product-gallery-images" type="file" accept=".jpg,.jpeg,.png,.webp" multiple disabled={uploadingImages || uploadingDiagram !== null} onChange={(event) => { const files = Array.from(event.currentTarget.files ?? []); event.currentTarget.value = ''; void uploadImages(files); }} />
+            <p className="small muted">支持 JPG、PNG、WebP，单张最大 10 MB，可一次选择多张。上传完成后请点击 Save 保存。</p>
+            {uploadingImages && <span className="small muted" role="status">图片上传中…</span>}
             <div className="flex gap-1 wrap mt-1">{images.map((u, index) => (
               <div className="product-image" key={`${u}-${index}`}>
                 <img src={u} className="img-thumb" alt="" />
@@ -271,13 +286,13 @@ export default function Products() {
               </div>
             ))}</div>
           </div>
-          <fieldset className="product-diagram-admin" disabled={uploadingDiagram !== null}>
-            <legend>遥控器、尺寸图与功能图</legend>
-            <p className="small muted">智能马桶使用独立的遥控器图片作为前台主图；尺寸图在详情页信息区显示。马桶和马桶盖的功能图在详情页下方通栏放大显示。支持 JPG、PNG、WebP，单张最大 10 MB；上传新图可替换，移除后不再显示原图，请点击 Save 保存。</p>
+          <fieldset className="product-diagram-admin" disabled={uploadingImages || uploadingDiagram !== null}>
+            <legend>主图、尺寸图与功能图</legend>
+            <p className="small muted">智能马桶默认展示主图，并可通过 Images 中的缩略图切换图片；尺寸图在详情页信息区显示。马桶和马桶盖的功能图在详情页下方通栏放大显示。支持 JPG、PNG、WebP，单张最大 10 MB；上传新图可替换，移除后不再显示原图，请点击 Save 保存。</p>
             <div className="form-grid-2">
               {(['remoteImage', 'dimensionImage', 'featureImage'] as const).map((field) => (
                 <div className="field product-diagram-admin__field" key={field}>
-                  <label htmlFor={`product-${field}`}>{field === 'remoteImage' ? '遥控器图片（智能马桶主图）' : field === 'dimensionImage' ? '尺寸图' : '功能图'}</label>
+                  <label htmlFor={`product-${field}`}>{field === 'remoteImage' ? '智能马桶主图（马桶 / 遥控器图片）' : field === 'dimensionImage' ? '尺寸图' : '功能图'}</label>
                   <input id={`product-${field}`} type="file" accept=".jpg,.jpeg,.png,.webp" onChange={(event) => {
                     const file = event.currentTarget.files?.[0];
                     event.currentTarget.value = '';
@@ -286,16 +301,16 @@ export default function Products() {
                   {uploadingDiagram === field && <span className="small muted" role="status">上传中…</span>}
                   {form[field] ? (
                     <div className="product-diagram-admin__preview">
-                      <a href={form[field]} target="_blank" rel="noreferrer"><img src={form[field]} alt={field === 'remoteImage' ? '遥控器预览' : field === 'dimensionImage' ? '尺寸图预览' : '功能图预览'} /></a>
+                      <a href={form[field]} target="_blank" rel="noreferrer"><img src={form[field]} alt={field === 'remoteImage' ? '主图预览' : field === 'dimensionImage' ? '尺寸图预览' : '功能图预览'} /></a>
                       <button className="btn btn-outline btn-sm" type="button" onClick={() => setForm((current) => ({ ...current, [field]: '' }))}>移除图片</button>
                     </div>
-                  ) : <span className="small muted">{field === 'remoteImage' ? '未上传遥控器，智能马桶前台显示缺图占位，不会回退到实物图。' : '未上传，前台不显示此区域。'}</span>}
+                  ) : <span className="small muted">{field === 'remoteImage' ? '未设置主图，将使用 Images 中的第一张图片；没有图片时显示占位图。' : '未上传，前台不显示此区域。'}</span>}
                 </div>
               ))}
             </div>
           </fieldset>
           <div className="field"><label>Send promotion email</label><input type="checkbox" checked={form.sendPromotion} onChange={set('sendPromotion')} /></div>
-          <button className="btn btn-primary" type="submit" disabled={uploadingDiagram !== null}>Save</button>
+          <button className="btn btn-primary" type="submit" disabled={uploadingImages || uploadingDiagram !== null}>Save</button>
         </form>
       )}
 
@@ -322,7 +337,7 @@ export default function Products() {
                   <div className="product-actions">
                     <button className="btn btn-outline btn-sm" disabled={index === 0} onClick={() => moveProduct(index, -1)}>↑</button>
                     <button className="btn btn-outline btn-sm" disabled={index === items.length - 1} onClick={() => moveProduct(index, 1)}>↓</button>
-                    <button className="btn btn-outline btn-sm" onClick={() => startEdit(p)}>Edit</button>
+                    <button className="btn btn-outline btn-sm" disabled={uploadingImages || uploadingDiagram !== null} onClick={() => startEdit(p)}>Edit</button>
                     {p.status !== 'ARCHIVED' && <button className="btn btn-outline btn-sm" onClick={() => archiveProduct(p)}>Archive</button>}
                     {p.status === 'ARCHIVED' && <button className="btn btn-outline btn-sm" onClick={() => permanentlyDeleteProduct(p)}>Delete permanently</button>}
                   </div>

@@ -18,13 +18,12 @@ export function usesWideFeaturePresentation(product: ProductMediaSource): boolea
 }
 
 export function productGallery(product: ProductMediaSource): string[] {
-  // No body-photo or model-specific fallback: an admin deletion must stay deleted.
-  if (usesRemoteOnlyPresentation(product)) return product.remoteImage ? [product.remoteImage] : [];
-  return Array.isArray(product.images)
-    ? product.images.filter((image) => typeof image === 'string' && image.length > 0) : [];
+  const images = Array.isArray(product.images) ? product.images : [];
+  const gallery = usesRemoteOnlyPresentation(product) ? [product.remoteImage, ...images] : images;
+  // Only use the current saved images, with the smart toilet primary image first.
+  return [...new Set(gallery.filter((image): image is string => typeof image === 'string' && image.trim().length > 0).map((image) => image.trim()))];
 }
 
 export function productThumbnail(product: ProductMediaSource): string {
-  if (usesRemoteOnlyPresentation(product)) return product.remoteImage || '/favicon.svg';
   return productGallery(product)[0] ?? product.image ?? '/favicon.svg';
 }
