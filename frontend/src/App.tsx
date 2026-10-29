@@ -4,6 +4,7 @@ import PublicLayout from './layouts/PublicLayout';
 import MemberLayout from './layouts/MemberLayout';
 import AdminLayout from './layouts/AdminLayout';
 import { PageLoading } from './components/ui';
+import Footer from './components/Footer';
 
 const Home = lazy(() => import('./pages/public/Home'));
 const Vision = lazy(() => import('./pages/public/Vision'));
@@ -120,6 +121,7 @@ export default function App() {
             <Route path="enquiries" element={<AdminEnquiries />} />
           </Route>
         </Routes>
+        <Footer />
       </Suspense>
     </BrowserRouter>
   );

@@ -16,6 +16,9 @@ export default function Home() {
   }, []);
 
   const slides: HomepageMediaItem[] = content?.homepageMedia?.length ? content.homepageMedia : defaultHomepageMedia;
+  const defaultQuality = (active % 4) + 1;
+  // Show the filtration explanation only beneath the first slide, even with more than four slides.
+  const activeQuality = active === 0 ? 4 : defaultQuality === 4 ? 1 : defaultQuality;
 
   useEffect(() => {
     setActive((current) => (current >= slides.length ? 0 : current));
@@ -55,10 +58,10 @@ export default function Home() {
           )}
           {[1, 2, 3, 4].map((index) => (
             <img
-              className={`aurius-home__quality${index === (active % 4) + 1 ? ' aurius-home__quality--active' : ''}`}
+              className={`aurius-home__quality${index === activeQuality ? ' aurius-home__quality--active' : ''}`}
               src={`/uploads/brand/home-quality-${index}.png`}
-              alt={index === (active % 4) + 1 ? 'Australian quality and certification information' : ''}
-              aria-hidden={index !== (active % 4) + 1}
+              alt={index === activeQuality ? (index === 4 ? 'Three-stage whole-house filtration media and benefits' : 'Australian quality and certification information') : ''}
+              aria-hidden={index !== activeQuality}
               key={index}
             />
           ))}

@@ -1,19 +1,17 @@
-import { useEffect, useState } from 'react';
-import { api } from '../../api/client';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/LanguageContext';
 import '../../assets/styles/pages-public.css';
 
 export default function Vision() {
   const { t, language } = useI18n();
-  const [media, setMedia] = useState<{ src: string; alt?: string } | null>(null);
-  useEffect(() => { let active = true; api.get<{ src: string; alt?: string } | null>('/api/vision-media').then((value) => { if (active) setMedia(value); }).catch(() => undefined); return () => { active = false; }; }, []);
   const paragraphs = language === 'zh-CN'
     ? [
       ['为更好的生活而设计', 'AURIUS 将现代美学与实用创新相结合，提供适合现代澳大利亚生活的智能卫浴解决方案和全屋净水系统。'],
+      ['建立长期合作关系', '我们相信，可持续增长始于可靠的产品、专业的服务和稳固的合作关系。'],
     ]
     : [
       ['Designed for Better Living', 'AURIUS combines contemporary aesthetics with practical innovation, offering smart bathroom solutions and whole-house water filtration systems designed for modern Australian living.'],
+      ['Built for Long-Term Partnerships', 'We believe sustainable growth begins with reliable products, professional service and strong partnerships.'],
     ];
   const values = language === 'zh-CN'
     ? [
@@ -31,10 +29,6 @@ export default function Vision() {
 
   return <>
     <section className="page-band vision-hero"><div className="container"><h1 className="section-title">{t('vision.title')}</h1><p className="section-sub vision-statement">{t('vision.sub')}</p></div></section>
-    <section className="section vision-showcase"><div className="container">
-      <div className="vision-showcase__media">{media?.src ? <img src={media.src} alt={media.alt || t('Whole-house water filtration for modern Australian living')} onError={() => setMedia(null)} /> : <div className="vision-showcase__empty"><span>AURIUS</span><h2>{t('Refined design. Everyday comfort.')}</h2><p>{t('Smart bathroom and whole-house water solutions for modern Australian homes.')}</p></div>}</div>
-      <div className="center mt-2"><Link className="btn btn-primary" to="/products">{t('Explore Our Products')}</Link></div>
-    </div></section>
     <section className="section vision-body"><div className="container" style={{ maxWidth: 820 }}>{paragraphs.map(([title, text]) => <article key={title}><h2>{title}</h2><p>{text}</p></article>)}</div></section>
     <section className="section section-alt vision-principles" aria-labelledby="vision-values-title"><div className="container">
       <h2 className="section-title" id="vision-values-title">{t('vision.standFor')}</h2>
