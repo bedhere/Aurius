@@ -1,4 +1,4 @@
-import hashlib,json,os,pathlib,runpy,subprocess,sys,urllib.request
+import hashlib,json,os,pathlib,runpy,subprocess,sys,time,urllib.error,urllib.request
 
 root=pathlib.Path('/opt/aurius')
 site=pathlib.Path('/opt/1panel/www/sites/aurius.com.au/index')
@@ -26,16 +26,25 @@ else:
 try:
     tested=subprocess.run(['docker','exec','1Panel-openresty-TCWK','nginx','-t'],capture_output=True,text=True)
     assert tested.returncode==0,tested.stderr
+    loaded=subprocess.run(['docker','exec','1Panel-openresty-TCWK','nginx','-T'],capture_output=True,text=True,check=True).stdout
+    assert '/products-spa.conf:' in loaded, 'New route include is not visible in the running container'
     subprocess.run(['docker','exec','1Panel-openresty-TCWK','nginx','-s','reload'],capture_output=True,text=True,check=True)
     class NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self,*args,**kwargs):return None
     opener=urllib.request.build_opener(NoRedirect())
     verified=[]
-    for path in ['/products','/products/','/products/4']:
-        with opener.open('https://aurius.com.au'+path,timeout=15) as response:
-            assert response.status==200 and response.headers.get_content_type()=='text/html'
-            assert hashlib.sha256(response.read()).hexdigest()==before_index
-            verified.append({'path':path,'status':200,'redirect':False})
+    for attempt in range(20):
+        try:
+            verified=[]
+            for path in ['/products','/products/','/products/4']:
+                with opener.open('https://aurius.com.au'+path,timeout=15) as response:
+                    assert response.status==200 and response.headers.get_content_type()=='text/html'
+                    assert hashlib.sha256(response.read()).hexdigest()==before_index
+                    verified.append({'path':path,'status':200,'redirect':False})
+            break
+        except (urllib.error.HTTPError,AssertionError):
+            if attempt==19:raise
+            time.sleep(.25)
     name='au-5888-filter-cartridge-set.jpg'
     with opener.open('https://aurius.com.au/products/'+name,timeout=15) as response:
         assert response.headers.get_content_type()=='image/jpeg'
