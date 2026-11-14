@@ -1,8 +1,8 @@
 {
   "scope": "CYBER registered-design badge and high-resolution RAYCLEAN gold image",
   "archive": "20261114-cyber-design.tar.gz",
-  "sha256": "c897e323a644dca8cf12afe88a0297fd60e54ed35aac8807d038edada31f5f6b",
-  "bytes": 351535,
+  "sha256": "d087d37333de74061b59767d5e5ccae4869e4bf4cdbae3e1aa0bfbba2000c0cc",
+  "bytes": 351493,
   "expected_production_source_sha256": {
     "src/pages/public/Products.tsx": "b132494af4a23671abc0b059ea699fb065a2be3feed400eec1192cb33d91fa29",
     "src/pages/public/ProductDetail.tsx": "14fef18abe1e5b9eb8ce50cd4da22c3cd78a7301515b550af6483baf004922de",
@@ -10,15 +10,16 @@
     "src/components/ProductDesignBadge.tsx": null
   },
   "source_sha256": {
-    "src/pages/public/Products.tsx": "c44c6a48d346809b8788446b8f3aadfd27692971b645cb88cb3fd0986eabad26",
-    "src/pages/public/ProductDetail.tsx": "29eea9e3e5241585863fc107ed0e07a831163262597c5913bbc1dc93a543f457",
-    "src/assets/styles/pages-public.css": "688a74570e6b56848ea5ea7e27ec44fc3b2b5b5f0267ef220d86ba6cdda5f235",
+    "src/pages/public/Products.tsx": "198484cf75979bcddfb19518e342636975f4071cf581ec48f9055dc38a4d9a81",
+    "src/pages/public/ProductDetail.tsx": "28cccb49e33099168a067a36302027940490a8bb470c2d40b3865889d76429e9",
+    "src/assets/styles/pages-public.css": "032ec8aff35ad08eca44f3ab7d6754b09aff7a36fd93eb5505c32fbcc3f6dd29",
     "src/components/ProductDesignBadge.tsx": "1a058c775897a86c072a6ac407352b4b98dc81099f72454452db00b338272575"
   },
   "checks": {
     "frontend_build": "passed",
     "existing_catalogue_media_tests": "10 passed",
-    "local_desktop_visual": "passed"
+    "local_desktop_visual": "passed",
+    "package_applies_to_exact_production_baseline": "passed"
   },
   "stock_and_prices": "preserved"
 }
